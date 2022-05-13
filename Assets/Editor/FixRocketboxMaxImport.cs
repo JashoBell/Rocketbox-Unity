@@ -1,7 +1,8 @@
-﻿using System.Reflection;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.Animations.Rigging;
+using System.Linq;
 public class FixRocketboxMaxImport : AssetPostprocessor
 {
     bool usingMixamoAnimations = true; 
@@ -17,14 +18,15 @@ public class FixRocketboxMaxImport : AssetPostprocessor
             material.SetFloat("_Mode", 2f);
     }
 
-    void OnPostprocessMeshHierarchy(GameObject gameObject)
+    void OnPostprocessMeshHierarchy(GameObject g)
     {
         // This function selects only the highest resolution mesh as being activated by default.
         // You might choose another poly level (they are "hipoly", "midpoly", "lowpoly" and "ultralowpoly")
         // to be selected. Or you could choose not to import, by changing OnPreprocessMeshHierarchy
-        if (gameObject.name.ToLower().Contains("poly") &&
-            !gameObject.name.ToLower().Contains("hipoly"))
-            gameObject.SetActive(false);
+        if (g.name.ToLower().Contains("poly") &&
+            !g.name.ToLower().Contains("hipoly"))
+            g.SetActive(false);
+        
     }
     
     void OnPreprocessTexture()
@@ -41,33 +43,45 @@ public class FixRocketboxMaxImport : AssetPostprocessor
 
     void OnPostprocessModel(GameObject g)
     {
-        if (g.transform.Find("Bip02") != null) RenameBip(g);
+            if (g.transform.Find("Bip02") != null) RenameBip(g);
+            Transform pelvis = g.transform.Find("Bip01").Find("Bip01 Pelvis");
+            if (pelvis == null) return;
+            Transform spine2 = pelvis.Find("Bip01 Spine").Find("Bip01 Spine1").Find("Bip01 Spine2");
+            Transform RClavicle = spine2.Find("Bip01 Neck").Find("Bip01 R Clavicle");
+            Transform LClavicle = spine2.Find("Bip01 Neck").Find("Bip01 L Clavicle");
 
-        Transform pelvis = g.transform.Find("Bip01").Find("Bip01 Pelvis");
-        if (pelvis == null) return;
-        Transform spine2 = pelvis.Find("Bip01 Spine").Find("Bip01 Spine1").Find("Bip01 Spine2");
-        Transform RClavicle = spine2.Find("Bip01 Neck").Find("Bip01 R Clavicle");
-        Transform LClavicle = spine2.Find("Bip01 Neck").Find("Bip01 L Clavicle");
 
 
-        if(!usingMixamoAnimations){
-            pelvis.Find("Bip01 Spine").Find("Bip01 L Thigh").parent = pelvis;
-            pelvis.Find("Bip01 Spine").Find("Bip01 R Thigh").parent = pelvis;
-            LClavicle.parent = spine2;
-            RClavicle.parent = spine2;
+            pelvis.Find("Bip01 Spine").Find("Bip01 L Thigh").SetParent(pelvis);
+            pelvis.Find("Bip01 Spine").Find("Bip01 R Thigh").SetParent(pelvis);
+            LClavicle.SetParent(spine2);
+            RClavicle.SetParent(spine2);
 
 
             LClavicle.rotation = new Quaternion(-0.7215106f, 0, 0, 0.6924035f);
             RClavicle.rotation = new Quaternion(0, -0.6925546f, 0.721365f, 0);
+            LClavicle.localPosition = new Vector3(-.13f, -.05f, .12f);
+            RClavicle.localPosition = new Vector3(-.13f, -.05f, -.12f);
             LClavicle.Find("Bip01 L UpperArm").rotation = new Quaternion(0, 0, 0, 0);
             RClavicle.Find("Bip01 R UpperArm").rotation = new Quaternion(0, 0, 0, 0);
-        }
-
-        AddIKConstraints(g);
 
         var importer = (ModelImporter)assetImporter;
         //If you need a humanoid avatar, change it here
+        var avatarMappings = generateAvatarBoneMappings(g);
+        importer.humanDescription = avatarMappings;
         importer.animationType = ModelImporterAnimationType.Human;
+        importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+
+
+        var avatar = AvatarBuilder.BuildHumanAvatar(g, avatarMappings);
+
+        g.AddComponent<Animator>();
+        g.GetComponent<Animator>().avatar = avatar; 
+
+        //AddIKConstraints(g);
+        g.AddComponent<AutoRigAvatar>();
+        importer.animationType = ModelImporterAnimationType.Generic;
+
 
 
     }
@@ -81,112 +95,124 @@ public class FixRocketboxMaxImport : AssetPostprocessor
 
     }
 
-    private GameObject AddIKConstraints(GameObject avatarBase){
-        
-        var rigBuilder = avatarBase.AddComponent<RigBuilder>();
-
-        var spine = avatarBase.transform.Find("Bip01").Find("Bip01 Pelvis").Find("Bip01 Spine").Find("Bip01 Spine1").Find("Bip01 Spine2").Find("Bip01 Neck");
-        var head = spine.transform.Find("Bip01 Head");
-        
-        var upperarm_l = spine.transform.Find("Bip01 L Clavicle").Find("Bip01 L UpperArm");
-        var upperarm_r = spine.transform.Find("Bip01 R Clavicle").Find("Bip01 R UpperArm");
-
-        var forearm_l = upperarm_l.transform.Find("Bip01 L Forearm");
-        var forearm_r = upperarm_r.transform.Find("Bip01 R Forearm");
-        
-        var hand_l = forearm_l.transform.Find("Bip01 L Hand");
-        var hand_r = forearm_r.transform.Find("Bip01 R Hand");
-
-        var constraintsRoot = new GameObject("ikConstraints");
-        var rig = constraintsRoot.AddComponent<Rig>();
-
-        constraintsRoot.transform.SetParent(avatarBase.transform);
-
-        rigBuilder.layers.Add(new RigLayer(rig, true));
-        
-        var forearmConstraintLeft = ArmIK("left forearm", upperarm_l.gameObject, forearm_l.gameObject, hand_l.gameObject);
-        var forearmConstraintRight = ArmIK("right forearm", upperarm_r.gameObject, forearm_r.gameObject, hand_r.gameObject);
-
-        forearmConstraintLeft.transform.SetParent(constraintsRoot.transform);
-        forearmConstraintRight.transform.SetParent(constraintsRoot.transform);
-
-        var handConstraintLeft = HandIK("left hand", upperarm_l.gameObject, forearm_l.gameObject, hand_l.gameObject);
-        var handConstraintRight = HandIK("right hand", upperarm_r.gameObject, forearm_r.gameObject, hand_r.gameObject);
-
-        handConstraintLeft.transform.SetParent(constraintsRoot.transform);
-        handConstraintRight.transform.SetParent(constraintsRoot.transform);
-
-        var headConstraint = HeadIK(head.gameObject);
-
-        headConstraint.transform.SetParent(constraintsRoot.transform);
-
-        return constraintsRoot;
-    }
-
-    private GameObject HandIK(string name, GameObject root, GameObject mid, GameObject tip)
+        private HumanDescription generateAvatarBoneMappings(GameObject g)
     {
+        Dictionary<string, string> boneName = new System.Collections.Generic.Dictionary<string, string>();
+        boneName["Chest"] = "Bip01 Spine1";
+        boneName["UpperChest"] = "Bip01 Spine2";
+        boneName["Head"] = "Bip01 Head";
+        boneName["Neck"] = "Bip01 Neck";
+        boneName["Hips"] = "Bip01 Pelvis";
+        boneName["LeftToes"] = "Bip01 L Toe0";
+        boneName["LeftFoot"] = "Bip01 L Foot";
+        boneName["LeftHand"] = "Bip01 L Hand";
+        boneName["LeftLowerArm"] = "Bip01 L Forearm";
+        boneName["LeftLowerLeg"] = "Bip01 L Calf";
+        boneName["LeftShoulder"] = "Bip01 L Clavicle";
+        boneName["LeftUpperArm"] = "Bip01 L UpperArm";
+        boneName["LeftUpperLeg"] = "Bip01 L Thigh";
+        boneName["RightToes"] = "Bip01 R Toe0";
+        boneName["RightFoot"] = "Bip01 R Foot";
+        boneName["RightHand"] = "Bip01 R Hand";
+        boneName["RightLowerArm"] = "Bip01 R Forearm";
+        boneName["RightLowerLeg"] = "Bip01 R Calf";
+        boneName["RightShoulder"] = "Bip01 R Clavicle";
+        boneName["RightUpperArm"] = "Bip01 R UpperArm";
+        boneName["RightUpperLeg"] = "Bip01 R Thigh";
+        boneName["Spine"] = "Bip01 Spine";
+
+        boneName["LeftThumbProximal"] = "Bip01 L Finger0";
+        boneName["LeftThumbIntermediate"] = "Bip01 L Finger01";
+        boneName["LeftThumbDistal"] = "Bip01 L Finger02";
+        boneName["LeftIndexProximal"] = "Bip01 L Finger1";
+        boneName["LeftIndexIntermediate"] = "Bip01 L Finger11";
+        boneName["LeftIndexDistal"] = "Bip01 L Finger12";
+        boneName["LeftMiddleProximal"] = "Bip01 L Finger2";
+        boneName["LeftMiddleIntermediate"] = "Bip01 L Finger21";
+        boneName["LeftMiddleDistal"] = "Bip01 L Finger22";
+        boneName["LeftRingProximal"] = "Bip01 L Finger3";
+        boneName["LeftRingIntermediate"] = "Bip01 L Finger31";
+        boneName["LeftRingDistal"] = "Bip01 L Finger32";
+        boneName["LeftLittleProximal"] = "Bip01 L Finger4";
+        boneName["LeftLittleIntermediate"] = "Bip01 L Finger41";
+        boneName["LeftLittleDistal"] = "Bip01 L Finger42";
+
+        boneName["RightThumbProximal"] = "Bip01 R Finger0";
+        boneName["RightThumbIntermediate"] = "Bip01 R Finger01";
+        boneName["RightThumbDistal"] = "Bip01 R Finger02";
+        boneName["RightIndexProximal"] = "Bip01 R Finger1";
+        boneName["RightIndexIntermediate"] = "Bip01 R Finger11";
+        boneName["RightIndexDistal"] = "Bip01 R Finger12";
+        boneName["RightMiddleProximal"] = "Bip01 R Finger2";
+        boneName["RightMiddleIntermediate"] = "Bip01 R Finger21";
+        boneName["RightMiddleDistal"] = "Bip01 R Finger22";
+        boneName["RightRingProximal"] = "Bip01 R Finger3";
+        boneName["RightRingIntermediate"] = "Bip01 R Finger31";
+        boneName["RightRingDistal"] = "Bip01 R Finger32";
+        boneName["RightLittleProximal"] = "Bip01 R Finger4";
+        boneName["RightLittleIntermediate"] = "Bip01 R Finger41";
+        boneName["RightLittleDistal"] = "Bip01 R Finger42";
+
+        string[] humanName = HumanTrait.BoneName;
+        HumanBone[] humanBones = new HumanBone[boneName.Count];
+
+
+        var skeletonBones = new List<SkeletonBone>();
+        var rootBone = new SkeletonBone();
+
+        rootBone.name = "Bip01";
+        var rootBoneTransform = g.transform.Find("Bip01");
+        rootBone.position = rootBoneTransform.position;
+        rootBone.rotation = rootBoneTransform.rotation;
+        rootBone.scale = rootBoneTransform.lossyScale;
         
-        GameObject hand = new GameObject(name);
-        
-        var handIK = hand.AddComponent<TwoBoneIKConstraint>();
-
-        handIK.data.tip = tip.transform;
-        handIK.data.mid = mid.transform;
-        handIK.data.root = root.transform;
-
-        var target = new GameObject(name + "_target");
-        var hint = new GameObject(name + "_hint");
-
-        target.transform.SetParent(hand.transform);
-        hint.transform.SetParent(hand.transform);
-
-        handIK.data.target = target.transform;
-        handIK.data.hint = hint.transform;
-
-        target.transform.position = tip.transform.position;
-        hint.transform.position = new Vector3(mid.transform.position.x, mid.transform.position.y, mid.transform.position.z-.1f);
-
-        return hand;
+        skeletonBones.Add(rootBone);
+       
+        int j = 0;
+        int i = 0;
+        while (i < humanName.Length)
+        {
+            if (boneName.ContainsKey(humanName[i]))
+            {
+                HumanBone humanBone = new HumanBone();
+                humanBone.humanName = humanName[i];
+                humanBone.boneName = boneName[humanName[i]];
+                var skeletonBone = new SkeletonBone();
+                var currentBoneName = boneName[humanName[i]];
+                skeletonBone.name = currentBoneName;
+                var currentBone = SearchHierarchyForBone(g.transform, currentBoneName);
+                skeletonBone.position = currentBone.position;
+                skeletonBone.rotation = currentBone.rotation;
+                skeletonBone.scale = currentBone.lossyScale;
+                skeletonBones.Add(skeletonBone);
+                humanBone.limit.useDefaultValues = true;
+                humanBones[j++] = humanBone;
+            }
+            i++;
+        }
+        var humanDescription = new HumanDescription();
+        humanDescription.human = humanBones;
+        humanDescription.skeleton = skeletonBones.ToArray();
+        return humanDescription;
     }
 
-    //Adds a multi-rotational constraint to the forearm such that it matches the x rotation of the hand, ensuring that the wrist does not deform during reaches.
-
-    private GameObject ArmIK(string name, GameObject source_a, GameObject constrained, GameObject source_b)
+    public Transform SearchHierarchyForBone(Transform current, string name)   
     {
-        GameObject forearm = new GameObject(name);
-
-        var armIK = forearm.AddComponent<MultiRotationConstraint>();
-
-        armIK.data.constrainedObject = constrained.transform;
-        var transforms = new WeightedTransformArray();
-        transforms.Add(new WeightedTransform(source_a.transform, 1));
-        transforms.Add(new WeightedTransform(source_b.transform, 1));
-        armIK.data.sourceObjects = transforms;
-
-        armIK.data.constrainedXAxis = true;
-        armIK.data.constrainedYAxis = false;
-        armIK.data.constrainedZAxis = false;
-
-        return forearm;
+        // check if the current bone is the bone we're looking for, if so return it
+        if (current.name == name)
+            return current;
+        // search through child bones for the bone we're looking for
+        for (int i = 0; i < current.childCount; ++i)
+        {
+            // the recursive step; repeat the search one step deeper in the hierarchy
+            Transform found = SearchHierarchyForBone(current.GetChild(i), name);
+            // a transform was returned by the search above that is not null,
+            // it must be the bone we're looking for
+            if (found != null)
+                return found;
+        }
+    
+        // bone with name was not found
+        return null;
     }
-
-    private GameObject HeadIK(GameObject headbone)
-    {
-        GameObject head = new GameObject("head");
-        GameObject head_target = new GameObject("head_target");
-        head_target.transform.SetParent(head.transform);
-        head_target.transform.position = headbone.transform.position;
-        
-
-        var headIK = head.AddComponent<MultiParentConstraint>();
-        headIK.data.constrainedObject = head.transform;
-        
-        var transforms = new WeightedTransformArray();
-        transforms.Add(new WeightedTransform(head_target.transform, 1));
-
-        headIK.data.sourceObjects = transforms;
-
-        return head;
-    }
-
 }
