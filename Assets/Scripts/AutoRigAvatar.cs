@@ -45,20 +45,20 @@ public class AutoRigAvatar : MonoBehaviour
 
         rigBuilder.layers.Add(new RigLayer(rig, true));
         
-        var forearmConstraintLeft = ArmIK("left forearm", upperarm_l.gameObject, forearm_l.gameObject, hand_l.gameObject);
-        var forearmConstraintRight = ArmIK("right forearm", upperarm_r.gameObject, forearm_r.gameObject, hand_r.gameObject);
+        var forearmConstraintLeft = ArmIK("left_forearm", upperarm_l.gameObject, forearm_l.gameObject, hand_l.gameObject);
+        var forearmConstraintRight = ArmIK("right_forearm", upperarm_r.gameObject, forearm_r.gameObject, hand_r.gameObject);
 
         forearmConstraintLeft.transform.SetParent(constraintsRoot.transform);
         forearmConstraintRight.transform.SetParent(constraintsRoot.transform);
 
-        var handConstraintLeft = SetupTwoBoneIK("left hand", upperarm_l.gameObject, forearm_l.gameObject, hand_l.gameObject);
-        var handConstraintRight = SetupTwoBoneIK("right hand", upperarm_r.gameObject, forearm_r.gameObject, hand_r.gameObject);
+        var handConstraintLeft = SetupTwoBoneIK("left_hand", upperarm_l.gameObject, forearm_l.gameObject, hand_l.gameObject);
+        var handConstraintRight = SetupTwoBoneIK("right_hand", upperarm_r.gameObject, forearm_r.gameObject, hand_r.gameObject);
 
         handConstraintLeft.transform.SetParent(constraintsRoot.transform);
         handConstraintRight.transform.SetParent(constraintsRoot.transform);
 
-        var footConstraintLeft = SetupTwoBoneIK("left foot", thigh_l.gameObject, calf_l.gameObject, foot_l.gameObject);
-        var footConstraintRight = SetupTwoBoneIK("right foot", thigh_r.gameObject, calf_r.gameObject, foot_r.gameObject);
+        var footConstraintLeft = SetupTwoBoneIK("left_foot", thigh_l.gameObject, calf_l.gameObject, foot_l.gameObject);
+        var footConstraintRight = SetupTwoBoneIK("right_foot", thigh_r.gameObject, calf_r.gameObject, foot_r.gameObject);
 
         footConstraintLeft.transform.SetParent(constraintsRoot.transform);
         footConstraintRight.transform.SetParent(constraintsRoot.transform);
@@ -106,21 +106,19 @@ public class AutoRigAvatar : MonoBehaviour
 
     //Adds a multi-rotational constraint to the forearm such that it matches the x rotation of the hand, ensuring that the wrist does not deform during reaches.
 
-    private GameObject ArmIK(string name, GameObject source_a, GameObject constrained, GameObject source_b)
+    private GameObject ArmIK(string name, GameObject upperarm_, GameObject forearm_, GameObject hand_)
     {
         GameObject forearm = new GameObject(name);
 
-        var armIK = forearm.AddComponent<MultiRotationConstraint>();
+        var armIK = forearm.AddComponent<TwistCorrection>();
 
-        armIK.data.constrainedObject = constrained.transform;
+        armIK.data.sourceObject = hand_.transform;
         var transforms = new WeightedTransformArray();
-        transforms.Add(new WeightedTransform(source_a.transform, 1));
-        transforms.Add(new WeightedTransform(source_b.transform, 1));
-        armIK.data.sourceObjects = transforms;
+        transforms.Add(new WeightedTransform(forearm_.transform, .75f));
+        transforms.Add(new WeightedTransform(upperarm_.transform, .25f));
+        armIK.data.twistNodes = transforms;
 
-        armIK.data.constrainedXAxis = true;
-        armIK.data.constrainedYAxis = false;
-        armIK.data.constrainedZAxis = false;
+        armIK.data.twistAxis = TwistCorrectionData.Axis.X;
 
         return forearm;
     }
@@ -131,6 +129,7 @@ public class AutoRigAvatar : MonoBehaviour
         GameObject head_target = new GameObject("head_target");
         head_target.transform.SetParent(head_.transform);
         head_target.transform.position = headbone.transform.position;
+        head_target.transform.rotation = headbone.transform.rotation;
         
 
         var headIK = head_.AddComponent<MultiParentConstraint>();

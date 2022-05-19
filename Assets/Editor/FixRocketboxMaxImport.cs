@@ -6,8 +6,10 @@ using System.Linq;
 public class FixRocketboxMaxImport : AssetPostprocessor
 {
     bool usingMixamoAnimations = true; 
+    bool usingManusGloves = true;
     void OnPostprocessMaterial(Material material)
     {
+        if(assetPath.ToLower().Contains("rocketbox")){
         // This fixes two problems with importing 3DSMax materials. The first is that the Max materials
         // assumed that diffuse material was set by the texture, whereas Unity multiplies the texture 
         // colour with the flat colour. 
@@ -16,6 +18,7 @@ public class FixRocketboxMaxImport : AssetPostprocessor
         // like glass sheets. The material mode "Fade" goes to full transparent. 
         if (material.GetFloat("_Mode") == 3f)
             material.SetFloat("_Mode", 2f);
+        }
     }
 
     void OnPostprocessMeshHierarchy(GameObject g)
@@ -23,7 +26,7 @@ public class FixRocketboxMaxImport : AssetPostprocessor
         // This function selects only the highest resolution mesh as being activated by default.
         // You might choose another poly level (they are "hipoly", "midpoly", "lowpoly" and "ultralowpoly")
         // to be selected. Or you could choose not to import, by changing OnPreprocessMeshHierarchy
-        if (g.name.ToLower().Contains("poly") &&
+        if (g.name.ToLower().Contains("poly") && assetPath.ToLower().Contains("rocketbox") &&
             !g.name.ToLower().Contains("hipoly"))
             g.SetActive(false);
         
@@ -33,7 +36,7 @@ public class FixRocketboxMaxImport : AssetPostprocessor
     {
         // This function changes textures that are labelled with "normal" in their title to be loaded as 
         // NormalMaps. This just avoids a warning dialogue box that would otherwise fix it.
-        if (assetPath.ToLower().Contains("normal"))
+        if (assetPath.ToLower().Contains("normal") && assetPath.ToLower().Contains("rocketbox"))
         {
             TextureImporter textureImporter = (TextureImporter)assetImporter;
             textureImporter.textureType = TextureImporterType.NormalMap;
@@ -43,6 +46,7 @@ public class FixRocketboxMaxImport : AssetPostprocessor
 
     void OnPostprocessModel(GameObject g)
     {
+        if (assetPath.ToLower().Contains("rocketbox")) {
             if (g.transform.Find("Bip02") != null) RenameBip(g);
             Transform pelvis = g.transform.Find("Bip01").Find("Bip01 Pelvis");
             if (pelvis == null) return;
@@ -74,13 +78,18 @@ public class FixRocketboxMaxImport : AssetPostprocessor
 
 
         var avatar = AvatarBuilder.BuildHumanAvatar(g, avatarMappings);
-
-        g.AddComponent<Animator>();
-        g.GetComponent<Animator>().avatar = avatar; 
-
-        //AddIKConstraints(g);
-        g.AddComponent<AutoRigAvatar>();
+        if(g.GetComponent(typeof(Animator)) == null){
+            g.AddComponent<Animator>();
+        }
+        g.GetComponent<Animator>().avatar = avatar;
         importer.animationType = ModelImporterAnimationType.Generic;
+        
+
+        g.AddComponent<AutoRigAvatar>();
+        if(usingManusGloves){
+            g.AddComponent<AvatarManusHandSetup>();
+        }
+        }
 
 
 
