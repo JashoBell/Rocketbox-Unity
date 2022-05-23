@@ -44,53 +44,75 @@ public class FixRocketboxMaxImport : AssetPostprocessor
         }
     }
 
+    void OnPreProcessModel()
+    {
+        var importer = (ModelImporter)assetImporter;
+        importer.animationType = ModelImporterAnimationType.None;
+    }
+
     void OnPostprocessModel(GameObject g)
     {
-        if (assetPath.ToLower().Contains("rocketbox")) {
-            if (g.transform.Find("Bip02") != null) RenameBip(g);
-            Transform pelvis = g.transform.Find("Bip01").Find("Bip01 Pelvis");
-            if (pelvis == null) return;
-            Transform spine2 = pelvis.Find("Bip01 Spine").Find("Bip01 Spine1").Find("Bip01 Spine2");
-            Transform RClavicle = spine2.Find("Bip01 Neck").Find("Bip01 R Clavicle");
-            Transform LClavicle = spine2.Find("Bip01 Neck").Find("Bip01 L Clavicle");
+        
+        if (g.transform.Find("Bip02") != null) RenameBip(g);
 
+        Transform rootBone = g.transform.Find("Bip01");
+        Transform pelvis = rootBone.Find("Bip01 Pelvis");
 
+        if (pelvis == null) return;
 
+        Transform spine2 = pelvis.Find("Bip01 Spine").Find("Bip01 Spine1").Find("Bip01 Spine2");
+
+        if(spine2.Find("Bip01 L Clavicle") == null)
+        {
+            Transform RClavicle_ = spine2.Find("Bip01 Neck").Find("Bip01 R Clavicle");
+            Transform LClavicle_ = spine2.Find("Bip01 Neck").Find("Bip01 L Clavicle");
+            LClavicle_.SetParent(spine2);
+            RClavicle_.SetParent(spine2);
+        }
+
+        if(pelvis.Find("Bip01 L Thigh") == null)
+        {
             pelvis.Find("Bip01 Spine").Find("Bip01 L Thigh").SetParent(pelvis);
             pelvis.Find("Bip01 Spine").Find("Bip01 R Thigh").SetParent(pelvis);
-            LClavicle.SetParent(spine2);
-            RClavicle.SetParent(spine2);
-
-
-            LClavicle.rotation = new Quaternion(-0.7215106f, 0, 0, 0.6924035f);
-            RClavicle.rotation = new Quaternion(0, -0.6925546f, 0.721365f, 0);
-            LClavicle.localPosition = new Vector3(-.13f, -.05f, .12f);
-            RClavicle.localPosition = new Vector3(-.13f, -.05f, -.12f);
-            LClavicle.Find("Bip01 L UpperArm").rotation = new Quaternion(0, 0, 0, 0);
-            RClavicle.Find("Bip01 R UpperArm").rotation = new Quaternion(0, 0, 0, 0);
+        }
 
         var importer = (ModelImporter)assetImporter;
-        //If you need a humanoid avatar, change it here
-        var avatarMappings = generateAvatarBoneMappings(g);
-        importer.humanDescription = avatarMappings;
         importer.animationType = ModelImporterAnimationType.Human;
         importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
-
-
+       
+        var avatarMappings = generateAvatarBoneMappings(g);
+        importer.humanDescription = avatarMappings;
         var avatar = AvatarBuilder.BuildHumanAvatar(g, avatarMappings);
+
         if(g.GetComponent(typeof(Animator)) == null){
             g.AddComponent<Animator>();
         }
         g.GetComponent<Animator>().avatar = avatar;
-        importer.animationType = ModelImporterAnimationType.Generic;
-        
 
-        g.AddComponent<AutoRigAvatar>();
-        if(usingManusGloves){
-            g.AddComponent<AvatarManusHandSetup>();
-        }
-        }
+        rootBone.eulerAngles = new Vector3(-90, 90, 0);
 
+        Transform RClavicle = spine2.Find("Bip01 R Clavicle");
+        Transform LClavicle = spine2.Find("Bip01 L Clavicle");
+
+        LClavicle.localEulerAngles = new Vector3(160, 90, 0);
+        RClavicle.localEulerAngles = new Vector3(-160, -90, 0);
+        LClavicle.localPosition = new Vector3(-0.1f,-0.01f,0.075f);
+        RClavicle.localPosition = new Vector3(-0.1f,-0.01f,-0.075f);
+        LClavicle.Find("Bip01 L UpperArm").localEulerAngles = Vector3.zero;
+        RClavicle.Find("Bip01 R UpperArm").localEulerAngles = Vector3.zero;
+        LClavicle.Find("Bip01 L UpperArm").Find("Bip01 L Forearm").localEulerAngles = Vector3.zero;
+        RClavicle.Find("Bip01 R UpperArm").Find("Bip01 R Forearm").localEulerAngles = Vector3.zero;
+  
+        if (assetPath.ToLower().Contains("rocketbox")) {
+            if(g.GetComponent(typeof(AutoRigAvatar)) == null)
+            {
+                g.AddComponent<AutoRigAvatar>();
+            }
+
+            if(g.GetComponent(typeof(AvatarManusHandSetup)) & usingManusGloves){
+                g.AddComponent<AvatarManusHandSetup>();
+            }
+        }
 
 
     }
@@ -107,28 +129,37 @@ public class FixRocketboxMaxImport : AssetPostprocessor
         private HumanDescription generateAvatarBoneMappings(GameObject g)
     {
         Dictionary<string, string> boneName = new System.Collections.Generic.Dictionary<string, string>();
+        boneName["Hips"] = "Bip01 Pelvis";
+        boneName["Spine"] = "Bip01 Spine";        
         boneName["Chest"] = "Bip01 Spine1";
         boneName["UpperChest"] = "Bip01 Spine2";
-        boneName["Head"] = "Bip01 Head";
-        boneName["Neck"] = "Bip01 Neck";
-        boneName["Hips"] = "Bip01 Pelvis";
-        boneName["LeftToes"] = "Bip01 L Toe0";
-        boneName["LeftFoot"] = "Bip01 L Foot";
-        boneName["LeftHand"] = "Bip01 L Hand";
-        boneName["LeftLowerArm"] = "Bip01 L Forearm";
-        boneName["LeftLowerLeg"] = "Bip01 L Calf";
-        boneName["LeftShoulder"] = "Bip01 L Clavicle";
-        boneName["LeftUpperArm"] = "Bip01 L UpperArm";
-        boneName["LeftUpperLeg"] = "Bip01 L Thigh";
-        boneName["RightToes"] = "Bip01 R Toe0";
-        boneName["RightFoot"] = "Bip01 R Foot";
-        boneName["RightHand"] = "Bip01 R Hand";
-        boneName["RightLowerArm"] = "Bip01 R Forearm";
-        boneName["RightLowerLeg"] = "Bip01 R Calf";
+
         boneName["RightShoulder"] = "Bip01 R Clavicle";
         boneName["RightUpperArm"] = "Bip01 R UpperArm";
+        boneName["RightLowerArm"] = "Bip01 R Forearm";
+        boneName["RightHand"] = "Bip01 R Hand";
+
+        boneName["LeftShoulder"] = "Bip01 L Clavicle";
+        boneName["LeftUpperArm"] = "Bip01 L UpperArm";
+        boneName["LeftLowerArm"] = "Bip01 L Forearm";
+        boneName["LeftHand"] = "Bip01 L Hand";
+
+        boneName["Neck"] = "Bip01 Neck";
+        boneName["Head"] = "Bip01 Head";
+        boneName["Jaw"] = "Bip01 MJaw";
+        boneName["Left Eye"] = "Bip01 LEye";
+        boneName["Right Eye"] = "Bip01 REye";
+
+        boneName["LeftUpperLeg"] = "Bip01 L Thigh";
+        boneName["LeftLowerLeg"] = "Bip01 L Calf";
+        boneName["LeftFoot"] = "Bip01 L Foot";
+        boneName["LeftToes"] = "Bip01 L Toe0";
+
+
         boneName["RightUpperLeg"] = "Bip01 R Thigh";
-        boneName["Spine"] = "Bip01 Spine";
+        boneName["RightLowerLeg"] = "Bip01 R Calf";
+        boneName["RightFoot"] = "Bip01 R Foot";
+        boneName["RightToes"] = "Bip01 R Toe0";
 
         boneName["LeftThumbProximal"] = "Bip01 L Finger0";
         boneName["LeftThumbIntermediate"] = "Bip01 L Finger01";
@@ -168,11 +199,19 @@ public class FixRocketboxMaxImport : AssetPostprocessor
 
         var skeletonBones = new List<SkeletonBone>();
         var rootBone = new SkeletonBone();
+        var parentObject = new SkeletonBone();
+        
+        parentObject.name = g.name;
+        parentObject.position = Vector3.zero;
+        parentObject.rotation = Quaternion.identity;
+        parentObject.scale = g.transform.lossyScale;
+
+        skeletonBones.Add(parentObject);
 
         rootBone.name = "Bip01";
         var rootBoneTransform = g.transform.Find("Bip01");
-        rootBone.position = rootBoneTransform.position;
-        rootBone.rotation = rootBoneTransform.rotation;
+        rootBone.position = rootBoneTransform.localPosition;
+        rootBone.rotation =  Quaternion.Euler(-90, 90, 0);
         rootBone.scale = rootBoneTransform.lossyScale;
         
         skeletonBones.Add(rootBone);
@@ -190,8 +229,8 @@ public class FixRocketboxMaxImport : AssetPostprocessor
                 var currentBoneName = boneName[humanName[i]];
                 skeletonBone.name = currentBoneName;
                 var currentBone = SearchHierarchyForBone(g.transform, currentBoneName);
-                skeletonBone.position = currentBone.position;
-                skeletonBone.rotation = currentBone.rotation;
+                skeletonBone.position = currentBone.localPosition;
+                skeletonBone.rotation = currentBone.localRotation;
                 skeletonBone.scale = currentBone.lossyScale;
                 skeletonBones.Add(skeletonBone);
                 humanBone.limit.useDefaultValues = true;
@@ -202,6 +241,7 @@ public class FixRocketboxMaxImport : AssetPostprocessor
         var humanDescription = new HumanDescription();
         humanDescription.human = humanBones;
         humanDescription.skeleton = skeletonBones.ToArray();
+        Debug.Log(skeletonBones.Find(x => x.name == "Bip01").rotation.eulerAngles.ToString());
         return humanDescription;
     }
 
