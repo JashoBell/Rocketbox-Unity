@@ -19,15 +19,7 @@ ModelImporter:
     optimizeGameObjects: 0
     motionNodeName: 
     rigImportErrors: 
-    rigImportWarnings: "Avatar creation errors found in old project file will be
-      treated as a warnings. Error will be ignored, but current Configuration needs
-      to be fixed:\n\tTransform 'Bip01 Neck' not found in HumanDescription.\nAvatar
-      Rig Configuration mis-match. Bone length in configuration does not match position
-      in animation file:\n\t'Bip01 L Thigh' : position error = 603.093323 mm\n\t'Bip01
-      L Calf' : position error = 376.791534 mm\n\t'Bip01 L Foot' : position error
-      = 193.658768 mm\n\t'Bip01 R Thigh' : position error = 588.768616 mm\n\t'Bip01
-      R Calf' : position error = 461.632202 mm\n\t'Bip01 R Foot' : position error
-      = 337.182617 mm\n"
+    rigImportWarnings: 
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 

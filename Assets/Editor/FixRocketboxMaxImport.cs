@@ -60,25 +60,25 @@ public class FixRocketboxMaxImport : AssetPostprocessor
 
         if (pelvis == null) return;
 
-        Transform spine2 = pelvis.Find("Bip01 Spine").Find("Bip01 Spine1").Find("Bip01 Spine2");
+        Transform spine2 = SearchHierarchyForBone(rootBone, "Bip01 Spine2");
 
         if(spine2.Find("Bip01 L Clavicle") == null)
         {
-            Transform RClavicle_ = spine2.Find("Bip01 Neck").Find("Bip01 R Clavicle");
-            Transform LClavicle_ = spine2.Find("Bip01 Neck").Find("Bip01 L Clavicle");
-            LClavicle_.SetParent(spine2);
-            RClavicle_.SetParent(spine2);
+            SearchHierarchyForBone(rootBone, "Bip01 L Clavicle").SetParent(spine2);
+            SearchHierarchyForBone(rootBone, "Bip01 R Clavicle").SetParent(spine2);
         }
 
         if(pelvis.Find("Bip01 L Thigh") == null)
         {
-            pelvis.Find("Bip01 Spine").Find("Bip01 L Thigh").SetParent(pelvis);
-            pelvis.Find("Bip01 Spine").Find("Bip01 R Thigh").SetParent(pelvis);
+            SearchHierarchyForBone(rootBone, "Bip01 L Thigh").SetParent(pelvis);
+           SearchHierarchyForBone(rootBone, "Bip01 R Thigh").SetParent(pelvis);
         }
+
+        fixBones(rootBone);
 
         var importer = (ModelImporter)assetImporter;
         importer.animationType = ModelImporterAnimationType.Human;
-        importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
+        //importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
        
         var avatarMappings = generateAvatarBoneMappings(g);
         importer.humanDescription = avatarMappings;
@@ -89,19 +89,9 @@ public class FixRocketboxMaxImport : AssetPostprocessor
         }
         g.GetComponent<Animator>().avatar = avatar;
 
-        rootBone.eulerAngles = new Vector3(-90, 90, 0);
+        
+        fixBones(rootBone);
 
-        Transform RClavicle = spine2.Find("Bip01 R Clavicle");
-        Transform LClavicle = spine2.Find("Bip01 L Clavicle");
-
-        LClavicle.localEulerAngles = new Vector3(160, 90, 0);
-        RClavicle.localEulerAngles = new Vector3(-160, -90, 0);
-        LClavicle.localPosition = new Vector3(-0.1f,-0.01f,0.075f);
-        RClavicle.localPosition = new Vector3(-0.1f,-0.01f,-0.075f);
-        LClavicle.Find("Bip01 L UpperArm").localEulerAngles = Vector3.zero;
-        RClavicle.Find("Bip01 R UpperArm").localEulerAngles = Vector3.zero;
-        LClavicle.Find("Bip01 L UpperArm").Find("Bip01 L Forearm").localEulerAngles = Vector3.zero;
-        RClavicle.Find("Bip01 R UpperArm").Find("Bip01 R Forearm").localEulerAngles = Vector3.zero;
   
         if (assetPath.ToLower().Contains("rocketbox")) {
             if(g.GetComponent(typeof(AutoRigAvatar)) == null)
@@ -109,7 +99,7 @@ public class FixRocketboxMaxImport : AssetPostprocessor
                 g.AddComponent<AutoRigAvatar>();
             }
 
-            if(g.GetComponent(typeof(AvatarManusHandSetup)) & usingManusGloves){
+            if(g.GetComponent(typeof(AvatarManusHandSetup)) == null & usingManusGloves){
                 g.AddComponent<AvatarManusHandSetup>();
             }
         }
@@ -126,7 +116,46 @@ public class FixRocketboxMaxImport : AssetPostprocessor
 
     }
 
-        private HumanDescription generateAvatarBoneMappings(GameObject g)
+    private void fixBones(Transform rootBone_)
+    {
+        rootBone_.eulerAngles = new Vector3(-90, 90, 0);
+
+        SearchHierarchyForBone(rootBone_, "Bip01 L Clavicle").localEulerAngles = new Vector3(160, 90, 0);
+        SearchHierarchyForBone(rootBone_, "Bip01 R Clavicle").localEulerAngles = new Vector3(-160, -90, 0);
+        SearchHierarchyForBone(rootBone_, "Bip01 L Clavicle").localPosition = new Vector3(-0.1f,-0.01f,0.075f);
+        SearchHierarchyForBone(rootBone_, "Bip01 R Clavicle").localPosition = new Vector3(-0.1f,-0.01f,-0.075f);
+        SearchHierarchyForBone(rootBone_, "Bip01 L UpperArm").localEulerAngles = Vector3.zero;
+        SearchHierarchyForBone(rootBone_, "Bip01 R UpperArm").localEulerAngles = Vector3.zero;
+        SearchHierarchyForBone(rootBone_, "Bip01 L Forearm").localEulerAngles = Vector3.zero;
+        SearchHierarchyForBone(rootBone_, "Bip01 R Forearm").localEulerAngles = Vector3.zero;
+
+
+        SearchHierarchyForBone(rootBone_, "Bip01 L Hand").localEulerAngles = new Vector3(310, 340, 20);
+        SearchHierarchyForBone(rootBone_, "Bip01 L Finger0").localEulerAngles = new Vector3(87, -31, 8);
+        SearchHierarchyForBone(rootBone_, "Bip01 L Finger1").localEulerAngles = new Vector3(4, 4, -3);
+        SearchHierarchyForBone(rootBone_, "Bip01 L Finger2").localEulerAngles = new Vector3(-13, 7, -6);
+        SearchHierarchyForBone(rootBone_, "Bip01 L Finger3").localEulerAngles = new Vector3(-15, 7, -6);
+        SearchHierarchyForBone(rootBone_, "Bip01 L Finger4").localEulerAngles = new Vector3(-34, 7, -7);
+        SearchHierarchyForBone(rootBone_, "Bip01 L Finger01").localEulerAngles = new Vector3(0, 0, -4);
+        SearchHierarchyForBone(rootBone_, "Bip01 L Finger11").localEulerAngles = new Vector3(0, 0, -4);
+        SearchHierarchyForBone(rootBone_, "Bip01 L Finger21").localEulerAngles = new Vector3(0, 0, -4);
+        SearchHierarchyForBone(rootBone_, "Bip01 L Finger31").localEulerAngles = new Vector3(0, 0, -4);
+        SearchHierarchyForBone(rootBone_, "Bip01 L Finger41").localEulerAngles = new Vector3(0, 0, -4);
+
+        SearchHierarchyForBone(rootBone_, "Bip01 R Hand").localEulerAngles = new Vector3(50, 20, 20);
+        SearchHierarchyForBone(rootBone_, "Bip01 R Finger0").localEulerAngles = new Vector3(-87, 31, 8);
+        SearchHierarchyForBone(rootBone_, "Bip01 R Finger1").localEulerAngles = new Vector3(-4, -4, -3);
+        SearchHierarchyForBone(rootBone_, "Bip01 R Finger2").localEulerAngles = new Vector3(13, -7, -6);
+        SearchHierarchyForBone(rootBone_, "Bip01 R Finger3").localEulerAngles = new Vector3(15, -7, -6);
+        SearchHierarchyForBone(rootBone_, "Bip01 R Finger4").localEulerAngles = new Vector3(34, -7, -7);
+        SearchHierarchyForBone(rootBone_, "Bip01 R Finger01").localEulerAngles = new Vector3(0, 0, -4);
+        SearchHierarchyForBone(rootBone_, "Bip01 R Finger11").localEulerAngles = new Vector3(0, 0, -4);
+        SearchHierarchyForBone(rootBone_, "Bip01 R Finger21").localEulerAngles = new Vector3(0, 0, -4);
+        SearchHierarchyForBone(rootBone_, "Bip01 R Finger31").localEulerAngles = new Vector3(0, 0, -4);
+        SearchHierarchyForBone(rootBone_, "Bip01 R Finger41").localEulerAngles = new Vector3(0, 0, -4);
+    }
+
+    private HumanDescription generateAvatarBoneMappings(GameObject g)
     {
         Dictionary<string, string> boneName = new System.Collections.Generic.Dictionary<string, string>();
         boneName["Hips"] = "Bip01 Pelvis";
