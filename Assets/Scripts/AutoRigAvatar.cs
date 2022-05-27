@@ -3,10 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
+using System.Reflection;
+using UnityEditor;
+using System.IO;
 
 [ExecuteInEditMode]
 public class AutoRigAvatar : MonoBehaviour
 {
+    [SerializeField] bool bipedMapped = false;
     private void Awake() {
 
         var g = this.gameObject;
@@ -15,10 +19,13 @@ public class AutoRigAvatar : MonoBehaviour
             var obj = AddIKConstraints(g);
             obj.transform.SetParent(g.transform);
         } 
+
     }
 
     private GameObject AddIKConstraints(GameObject avatarBase){
         
+        
+
         var rigBuilder = avatarBase.AddComponent<RigBuilder>();
 
         var spine = avatarBase.transform.Find("Bip01").Find("Bip01 Pelvis").Find("Bip01 Spine").Find("Bip01 Spine1").Find("Bip01 Spine2");

@@ -1,11 +1,13 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.Animations.Rigging;
 using System.Linq;
+using System.Reflection;
+
 public class FixRocketboxMaxImport : AssetPostprocessor
 {
-    bool usingMixamoAnimations = true; 
+    bool usingAutoRig = true;
     bool usingManusGloves = true;
     void OnPostprocessMaterial(Material material)
     {
@@ -44,12 +46,6 @@ public class FixRocketboxMaxImport : AssetPostprocessor
         }
     }
 
-    void OnPreProcessModel()
-    {
-        var importer = (ModelImporter)assetImporter;
-        importer.animationType = ModelImporterAnimationType.None;
-    }
-
     void OnPostprocessModel(GameObject g)
     {
         
@@ -71,30 +67,29 @@ public class FixRocketboxMaxImport : AssetPostprocessor
         if(pelvis.Find("Bip01 L Thigh") == null)
         {
             SearchHierarchyForBone(rootBone, "Bip01 L Thigh").SetParent(pelvis);
-           SearchHierarchyForBone(rootBone, "Bip01 R Thigh").SetParent(pelvis);
+            SearchHierarchyForBone(rootBone, "Bip01 R Thigh").SetParent(pelvis);
         }
 
         fixBones(rootBone);
 
         var importer = (ModelImporter)assetImporter;
+        
+        if(g.GetComponent(typeof(Animator)) == null){
+            g.AddComponent<Animator>();
+        }     
+
+        importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
         importer.animationType = ModelImporterAnimationType.Human;
-        //importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
-       
         var avatarMappings = generateAvatarBoneMappings(g);
         importer.humanDescription = avatarMappings;
         var avatar = AvatarBuilder.BuildHumanAvatar(g, avatarMappings);
 
-        if(g.GetComponent(typeof(Animator)) == null){
-            g.AddComponent<Animator>();
-        }
-        g.GetComponent<Animator>().avatar = avatar;
+        importer.SaveAndReimport();
 
-        
-        fixBones(rootBone);
+   
 
-  
         if (assetPath.ToLower().Contains("rocketbox")) {
-            if(g.GetComponent(typeof(AutoRigAvatar)) == null)
+            if(g.GetComponent(typeof(AutoRigAvatar)) == null & usingAutoRig)
             {
                 g.AddComponent<AutoRigAvatar>();
             }
@@ -104,8 +99,9 @@ public class FixRocketboxMaxImport : AssetPostprocessor
             }
         }
 
-
+        fixBones(rootBone);
     }
+
     private void RenameBip(GameObject currentBone)
     {
         currentBone.name = currentBone.name.Replace("Bip02", "Bip01");
@@ -176,8 +172,8 @@ public class FixRocketboxMaxImport : AssetPostprocessor
         boneName["Neck"] = "Bip01 Neck";
         boneName["Head"] = "Bip01 Head";
         boneName["Jaw"] = "Bip01 MJaw";
-        boneName["Left Eye"] = "Bip01 LEye";
-        boneName["Right Eye"] = "Bip01 REye";
+        boneName["LeftEye"] = "Bip01 LEye";
+        boneName["RightEye"] = "Bip01 REye";
 
         boneName["LeftUpperLeg"] = "Bip01 L Thigh";
         boneName["LeftLowerLeg"] = "Bip01 L Calf";
@@ -190,40 +186,41 @@ public class FixRocketboxMaxImport : AssetPostprocessor
         boneName["RightFoot"] = "Bip01 R Foot";
         boneName["RightToes"] = "Bip01 R Toe0";
 
-        boneName["LeftThumbProximal"] = "Bip01 L Finger0";
-        boneName["LeftThumbIntermediate"] = "Bip01 L Finger01";
-        boneName["LeftThumbDistal"] = "Bip01 L Finger02";
-        boneName["LeftIndexProximal"] = "Bip01 L Finger1";
-        boneName["LeftIndexIntermediate"] = "Bip01 L Finger11";
-        boneName["LeftIndexDistal"] = "Bip01 L Finger12";
-        boneName["LeftMiddleProximal"] = "Bip01 L Finger2";
-        boneName["LeftMiddleIntermediate"] = "Bip01 L Finger21";
-        boneName["LeftMiddleDistal"] = "Bip01 L Finger22";
-        boneName["LeftRingProximal"] = "Bip01 L Finger3";
-        boneName["LeftRingIntermediate"] = "Bip01 L Finger31";
-        boneName["LeftRingDistal"] = "Bip01 L Finger32";
-        boneName["LeftLittleProximal"] = "Bip01 L Finger4";
-        boneName["LeftLittleIntermediate"] = "Bip01 L Finger41";
-        boneName["LeftLittleDistal"] = "Bip01 L Finger42";
+        boneName["Left Thumb Proximal"] = "Bip01 L Finger0";
+        boneName["Left Thumb Intermediate"] = "Bip01 L Finger01";
+        boneName["Left Thumb Distal"] = "Bip01 L Finger02";
+        boneName["Left Index Proximal"] = "Bip01 L Finger1";
+        boneName["Left Index Intermediate"] = "Bip01 L Finger11";
+        boneName["Left Index Distal"] = "Bip01 L Finger12";
+        boneName["Left Middle Proximal"] = "Bip01 L Finger2";
+        boneName["Left Middle Intermediate"] = "Bip01 L Finger21";
+        boneName["Left Middle Distal"] = "Bip01 L Finger22";
+        boneName["Left Ring Proximal"] = "Bip01 L Finger3";
+        boneName["Left Ring Intermediate"] = "Bip01 L Finger31";
+        boneName["Left Ring Distal"] = "Bip01 L Finger32";
+        boneName["Left Little Proximal"] = "Bip01 L Finger4";
+        boneName["Left Little Intermediate"] = "Bip01 L Finger41";
+        boneName["Left Little Distal"] = "Bip01 L Finger42";
 
-        boneName["RightThumbProximal"] = "Bip01 R Finger0";
-        boneName["RightThumbIntermediate"] = "Bip01 R Finger01";
-        boneName["RightThumbDistal"] = "Bip01 R Finger02";
-        boneName["RightIndexProximal"] = "Bip01 R Finger1";
-        boneName["RightIndexIntermediate"] = "Bip01 R Finger11";
-        boneName["RightIndexDistal"] = "Bip01 R Finger12";
-        boneName["RightMiddleProximal"] = "Bip01 R Finger2";
-        boneName["RightMiddleIntermediate"] = "Bip01 R Finger21";
-        boneName["RightMiddleDistal"] = "Bip01 R Finger22";
-        boneName["RightRingProximal"] = "Bip01 R Finger3";
-        boneName["RightRingIntermediate"] = "Bip01 R Finger31";
-        boneName["RightRingDistal"] = "Bip01 R Finger32";
-        boneName["RightLittleProximal"] = "Bip01 R Finger4";
-        boneName["RightLittleIntermediate"] = "Bip01 R Finger41";
-        boneName["RightLittleDistal"] = "Bip01 R Finger42";
+        boneName["Right Thumb Proximal"] = "Bip01 R Finger0";
+        boneName["Right Thumb Intermediate"] = "Bip01 R Finger01";
+        boneName["Right Thumb Distal"] = "Bip01 R Finger02";
+        boneName["Right Index Proximal"] = "Bip01 R Finger1";
+        boneName["Right Index Intermediate"] = "Bip01 R Finger11";
+        boneName["Right Index Distal"] = "Bip01 R Finger12";
+        boneName["Right Middle Proximal"] = "Bip01 R Finger2";
+        boneName["Right Middle Intermediate"] = "Bip01 R Finger21";
+        boneName["Right Middle Distal"] = "Bip01 R Finger22";
+        boneName["Right Ring Proximal"] = "Bip01 R Finger3";
+        boneName["Right Ring Intermediate"] = "Bip01 R Finger31";
+        boneName["Right Ring Distal"] = "Bip01 R Finger32";
+        boneName["Right Little Proximal"] = "Bip01 R Finger4";
+        boneName["Right Little Intermediate"] = "Bip01 R Finger41";
+        boneName["Right Little Distal"] = "Bip01 R Finger42";
 
-        string[] humanName = HumanTrait.BoneName;
+        string[] humanName = boneName.Keys.ToArray();
         HumanBone[] humanBones = new HumanBone[boneName.Count];
+
 
 
         var skeletonBones = new List<SkeletonBone>();
@@ -264,13 +261,14 @@ public class FixRocketboxMaxImport : AssetPostprocessor
                 skeletonBones.Add(skeletonBone);
                 humanBone.limit.useDefaultValues = true;
                 humanBones[j++] = humanBone;
+                Debug.Log(skeletonBone.name);
             }
             i++;
         }
         var humanDescription = new HumanDescription();
         humanDescription.human = humanBones;
+        humanDescription.hasTranslationDoF = true;
         humanDescription.skeleton = skeletonBones.ToArray();
-        Debug.Log(skeletonBones.Find(x => x.name == "Bip01").rotation.eulerAngles.ToString());
         return humanDescription;
     }
 
