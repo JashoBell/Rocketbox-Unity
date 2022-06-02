@@ -6,20 +6,49 @@ using UnityEngine.Animations.Rigging;
 using System.Reflection;
 using UnityEditor;
 using System.IO;
+using RootMotion.FinalIK;
+using RootMotion.Demos;
 
 [ExecuteInEditMode]
 public class AutoRigAvatar : MonoBehaviour
 {
     [SerializeField] bool bipedMapped = false;
-    private void Awake() {
+    public enum ikSolver {FinalIK, UnityXR};
 
-        var g = this.gameObject;
-        if(g.GetComponent(typeof(RigBuilder)) == null)
+    public void IKSetupChooser(ikSolver ikSolver, GameObject g)
+    {
+        switch (ikSolver){
+        case ikSolver.FinalIK:
+        if(g.GetComponent(typeof(VRIK)) == null)
+        {
+            var obj = FinalIKSetup(g.gameObject);
+            if(g.GetComponent(typeof(VRIKCalibrationController)) == null)
+            {
+            var cal = g.AddComponent<VRIKCalibrationController>();
+            cal.ik = g.GetComponent<VRIK>();
+            }
+        }
+        
+        break;
+        case ikSolver.UnityXR: 
+        if(g.gameObject.GetComponent(typeof(RigBuilder)) == null)
         {
             var obj = AddIKConstraints(g);
             obj.transform.SetParent(g.transform);
         } 
+        break;
+        }
+        
 
+        
+    }
+
+    public GameObject FinalIKSetup(GameObject avatarBase)
+    {
+        var vrik = avatarBase.AddComponent<VRIK>();
+        vrik.AutoDetectReferences();
+        vrik.GuessHandOrientations();
+        return avatarBase;
     }
 
     private GameObject AddIKConstraints(GameObject avatarBase){

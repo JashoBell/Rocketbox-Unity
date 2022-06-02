@@ -9,6 +9,7 @@ public class FixRocketboxMaxImport : AssetPostprocessor
 {
     bool usingAutoRig = true;
     bool usingManusGloves = true;
+    bool usingFinalIK = true;
     void OnPostprocessMaterial(Material material)
     {
         if(assetPath.ToLower().Contains("rocketbox")){
@@ -91,7 +92,13 @@ public class FixRocketboxMaxImport : AssetPostprocessor
         if (assetPath.ToLower().Contains("rocketbox")) {
             if(g.GetComponent(typeof(AutoRigAvatar)) == null & usingAutoRig)
             {
-                g.AddComponent<AutoRigAvatar>();
+                var ik = g.AddComponent<AutoRigAvatar>();
+                if(usingFinalIK)
+                {
+                    ik.IKSetupChooser(AutoRigAvatar.ikSolver.FinalIK, g);
+                } else {
+                    ik.IKSetupChooser(AutoRigAvatar.ikSolver.UnityXR, g);
+                }
             }
 
             if(g.GetComponent(typeof(AvatarManusHandSetup)) == null & usingManusGloves){
