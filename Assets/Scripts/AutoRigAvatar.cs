@@ -27,6 +27,7 @@ public class AutoRigAvatar : MonoBehaviour
             var cal = g.AddComponent<VRIKCalibrationController>();
             cal.ik = g.GetComponent<VRIK>();
             }
+
         }
         
         break;
@@ -48,6 +49,36 @@ public class AutoRigAvatar : MonoBehaviour
         var vrik = avatarBase.AddComponent<VRIK>();
         vrik.AutoDetectReferences();
         vrik.GuessHandOrientations();
+        
+        var r_wrist = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Wrist");
+        var l_wrist = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Wrist");
+        if(BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Wrist") != null)
+        {
+            var twistRelaxerRight = r_wrist.gameObject.AddComponent<TwistRelaxer>();
+
+            var twistSolverWristRight = new TwistSolver();
+            twistSolverWristRight.transform = r_wrist;
+            var twistSolverForearmRight = new TwistSolver();
+            twistSolverForearmRight.transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Forearm");
+            var twistSolverUpperArmRight = new TwistSolver();
+            twistSolverUpperArmRight.transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R UpperArm");
+
+            twistRelaxerRight.twistSolvers = new TwistSolver[] {twistSolverWristRight, twistSolverForearmRight, twistSolverUpperArmRight};
+            twistRelaxerRight.ik = vrik;
+
+            var twistRelaxerLeft = l_wrist.gameObject.AddComponent<TwistRelaxer>();
+            var twistSolverWristLeft = new TwistSolver();
+            twistSolverWristLeft.transform = l_wrist;
+            var twistSolverForearmLeft = new TwistSolver();
+            twistSolverForearmLeft.transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Forearm");
+            var twistSolverUpperArmLeft = new TwistSolver();
+            twistSolverUpperArmLeft.transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L UpperArm");
+
+            twistRelaxerLeft.twistSolvers = new TwistSolver[] {twistSolverWristLeft, twistSolverForearmLeft, twistSolverUpperArmLeft};
+            twistRelaxerLeft.ik = vrik;
+        }
+
+
         return avatarBase;
     }
 
@@ -57,24 +88,25 @@ public class AutoRigAvatar : MonoBehaviour
 
         var rigBuilder = avatarBase.AddComponent<RigBuilder>();
 
-        var spine = avatarBase.transform.Find("Bip01").Find("Bip01 Pelvis").Find("Bip01 Spine").Find("Bip01 Spine1").Find("Bip01 Spine2");
-        var head = spine.transform.Find("Bip01 Neck").Find("Bip01 Head");
+        var head = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 Head");
         
-        var upperarm_l = spine.transform.Find("Bip01 L Clavicle").Find("Bip01 L UpperArm");
-        var upperarm_r = spine.transform.Find("Bip01 R Clavicle").Find("Bip01 R UpperArm");
+        var upperarm_l = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Upperarm");
+        var upperarm_r = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Upperarm");
 
-        var forearm_l = upperarm_l.transform.Find("Bip01 L Forearm");
-        var forearm_r = upperarm_r.transform.Find("Bip01 R Forearm");
+        var forearm_l = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Forearm");
+        var forearm_r = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Forearm");
         
-        var hand_l = forearm_l.transform.Find("Bip01 L Hand");
-        var hand_r = forearm_r.transform.Find("Bip01 R Hand");
+        var hand_l = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Hand");
+        var hand_r = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Hand");
 
-        var thigh_l = avatarBase.transform.Find("Bip01").Find("Bip01 Pelvis").Find("Bip01 L Thigh");
-        var thigh_r = avatarBase.transform.Find("Bip01").Find("Bip01 Pelvis").Find("Bip01 R Thigh");
-        var calf_l = thigh_l.Find("Bip01 L Calf");
-        var calf_r = thigh_r.Find("Bip01 R Calf");
-        var foot_l = calf_l.Find("Bip01 L Foot");
-        var foot_r = calf_r.Find("Bip01 R Foot");
+        var thigh_l = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Thigh");
+        var thigh_r = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Thigh");
+
+        var calf_l = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Calf");
+        var calf_r = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Calf");
+
+        var foot_l = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Foot");
+        var foot_r = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Foot");
 
         var constraintsRoot = new GameObject("ikConstraints");
         var rig = constraintsRoot.AddComponent<Rig>();
@@ -117,6 +149,8 @@ public class AutoRigAvatar : MonoBehaviour
         twoboneIK.data.mid = mid.transform;
         twoboneIK.data.root = root.transform;
 
+        //Twobone IK needs a target to aim for, and a hint to assist bending of the limb
+
         var target = new GameObject(name + "_target");
         var hint = new GameObject(name + "_hint");
 
@@ -129,11 +163,13 @@ public class AutoRigAvatar : MonoBehaviour
         target.transform.position = tip.transform.position;
         target.transform.rotation = tip.transform.rotation;
 
+        //Hint should be placed where limb should bend
+
         if(name.ToLower().Contains("foot")){
-            hint.transform.position = new Vector3(mid.transform.position.x, mid.transform.position.y+.5f, mid.transform.position.z+1f);
+            hint.transform.position = new Vector3(mid.transform.position.x, mid.transform.position.y+.5f, mid.transform.position.z + 1f);
         } else if(name.ToLower().Contains("hand"))
         {
-            hint.transform.position = new Vector3(mid.transform.position.x, mid.transform.position.y, mid.transform.position.z-.1f);
+            hint.transform.position = new Vector3(mid.transform.position.x, mid.transform.position.y, mid.transform.position.z - .1f);
         }
         
 

@@ -1,3 +1,13 @@
+### Note
+This is a fork of Microsoft's Rocketbox Library that aims to prepare the adult avatars for use as a participant's self-avatar in Unity, such that the participant could choose from a catalog as opposed to a single, rigged avatar that the experimenters constructed. 
+  
+Changes from the original include:
+- Bone/import fixes: Might have been my own specific case, but the avatars were all deformed on import with the main repo (the arms were lower than they should have been after the clavicle changes). That is fixed here (at least, it is for me!).
+- Basic rigging: Adds IK constraints to the avatar GameObject. Can choose FinalIK or UnityXR using a boolean at the top of "FixRocketboxMaxImport". Note: the UnityXR rig is not optimal, and is essentially just put together from tutorial videos [such as this one](https://www.youtube.com/watch?v=MYOjQICbd8I). More work could be done on it, but I went with FinalIK in my own study because it would take me quite a while of tweaking to get the IK constraints to work even that well.
+- Manus integration: I'm using Manus gloves for my upcoming study, so set-up for those is optionally included here as well.
+
+Left to the experimenter would be the assignment of trackers and IK targets to the correct locations. Since that can be done fairly simply and set-ups will wildly differ between studies, I've left that part out.
+
 ## MICROSOFT ROCKETBOX AVATAR LIBRARY
 The Microsoft Rocketbox Avatar library consists of 115 characters and avatars fully rigged and with high definition that was developed over the course of 10 years. The diversity of the characters and the quality of the rigging together with a relatively low-poly meshes, makes this library the go-to asset among research laboratories worldwide from crowd simulation to real-time avatar embodiment and social Virtual Reality (VR). Ever since their launch, laboratories around the globe have been using the library and many of the lead authors in the VR community have extensively used these avatars during their research.
 
