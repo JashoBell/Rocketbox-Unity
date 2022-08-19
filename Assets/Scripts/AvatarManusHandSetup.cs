@@ -1,98 +1,92 @@
 using System.Collections;
 using System.Collections.Generic;
+using AvatarUtilities;
 using UnityEngine;
 using Manus.Hand;
 
 [ExecuteInEditMode]
 public class AvatarManusHandSetup : MonoBehaviour
 {
-    private void Awake() {
-        if(GameObject.Find("right_hand_tracker") != null & GameObject.Find("left_hand_tracker") != null)
-        {
-            var g = this.gameObject;
-            var r_hand = findHand(g, "right");
-            var l_hand = findHand(g, "left");
-            var r_hand_target = GameObject.Find("right_hand_tracker");
-            var l_hand_target = GameObject.Find("left_hand_tracker");
-
-            if(l_hand_target.GetComponent(typeof(Hand)) == null)
-            {
-                l_hand_target = AttachManusHand(l_hand_target, "left");
-            }
-            if(r_hand_target.GetComponent(typeof(Hand)) == null)
-            {
-                r_hand_target = AttachManusHand(r_hand_target, "right");
-            }
-
-            if(l_hand.GetComponent(typeof(HandAnimator)) == null)
-            {
-                l_hand = AttachManusHandAnimator(l_hand, "left");
-            } 
-            if(r_hand.GetComponent(typeof(HandAnimator)) == null)
-            {
-                r_hand = AttachManusHandAnimator(r_hand, "right");
-            }
-        }
+    private void Awake()
+    {
         
+        if (!(GameObject.Find("right_hand_tracker") != null & GameObject.Find("left_hand_tracker") != null)) return;
+        
+        var g = this.gameObject;
+        var rHand = FindHand(g, "right");
+        var lHand = FindHand(g, "left");
+        var rHandTarget = GameObject.Find("right_hand_tracker");
+        var lHandTarget = GameObject.Find("left_hand_tracker");
+
+        if(lHandTarget.GetComponent(typeof(Hand)) == null)
+        {
+            lHandTarget = AttachManusHand(lHandTarget, "left");
+        }
+        if(rHandTarget.GetComponent(typeof(Hand)) == null)
+        {
+            rHandTarget = AttachManusHand(rHandTarget, "right");
+        }
+
+        if(lHand.GetComponent(typeof(HandAnimator)) == null)
+        {
+            lHand = AttachManusHandAnimator(lHand, "left");
+        } 
+        if(rHand.GetComponent(typeof(HandAnimator)) == null)
+        {
+            rHand = AttachManusHandAnimator(rHand, "right");
+        }
+
 
 
     }
 
-    public GameObject findHand(GameObject root, string side)
+    private static GameObject FindHand(GameObject root, string side)
     {
         
-        var hand_l = BoneUtilities.SearchHierarchyForBone(root.transform, "Bip01 L Hand");
-        var hand_r = BoneUtilities.SearchHierarchyForBone(root.transform, "Bip01 R Hand");
+        var handL = BoneUtilities.SearchHierarchyForBone(root.transform, "Bip01 L Hand");
+        var handR = BoneUtilities.SearchHierarchyForBone(root.transform, "Bip01 R Hand");
 
-        if(side == "right")
-        {
-            return hand_r.gameObject;
-        } else
-        {
-            return hand_l.gameObject;
-        }
+        return side == "right" ? handR.gameObject : handL.gameObject;
  
     }
 
-    public GameObject AttachManusHandAnimator(GameObject hand_, string side)
+    private static GameObject AttachManusHandAnimator(GameObject hand, string side)
     {
-        GameObject hand = hand_;
-        
-        var hand_animator = hand.AddComponent<HandAnimator>();
+        var handAnimator = hand.AddComponent<HandAnimator>();
 
-        if (side == "right")
+        switch (side)
         {
-            hand_animator.handModelType = Manus.Utility.HandType.RightHand;
-        }
-        else if(side == "left")
-        {
-            hand_animator.handModelType = Manus.Utility.HandType.LeftHand;
+            case "right":
+                handAnimator.handModelType = Manus.Utility.HandType.RightHand;
+                break;
+            case "left":
+                handAnimator.handModelType = Manus.Utility.HandType.LeftHand;
+                break;
         }
 
-        hand_animator.FindFingers();
-        hand_animator.CalculateAxes();
-        hand_animator.SetDefaultLimits();
+        handAnimator.FindFingers();
+        handAnimator.CalculateAxes();
+        handAnimator.SetDefaultLimits();
 
         return hand;
     }
-    
-    public GameObject AttachManusHand(GameObject hand_target_, string side)
+
+    private static GameObject AttachManusHand(GameObject hand, string side)
     {
-        GameObject hand_target = hand_target_;
+        var handComponent = hand.AddComponent<Hand>();
 
-        var hand_component = hand_target.AddComponent<Hand>();
-
-        if (side == "right")
+        switch (side)
         {
-            hand_component.type = Manus.Utility.HandType.RightHand;
-            hand_component.rotationOffset = new Vector3(0, 90, 90);
-        }
-        else if(side == "left")
-        {
-            hand_component.type = Manus.Utility.HandType.LeftHand;
-            hand_component.rotationOffset = new Vector3(0, 90, 90);
+            case "right":
+                handComponent.type = Manus.Utility.HandType.RightHand;
+                handComponent.rotationOffset = new Vector3(0, 90, 90);
+                break;
+            case "left":
+                handComponent.type = Manus.Utility.HandType.LeftHand;
+                handComponent.rotationOffset = new Vector3(0, 90, 90);
+                break;
         }
 
-        return hand_target;
+        return hand;
     }
 }

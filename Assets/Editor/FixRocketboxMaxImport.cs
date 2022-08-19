@@ -4,13 +4,14 @@ using UnityEditor;
 using UnityEngine.Animations.Rigging;
 using System.Linq;
 using System.Reflection;
+using AvatarUtilities;
 
 public class FixRocketboxMaxImport : AssetPostprocessor
 {
-    bool usingAutoRig = true;
-    bool usingManusGloves = true;
-    bool usingFinalIK = true;
-    bool twistCorrection = true;
+    private const bool UsingAutoRig = true;
+    private const bool UsingManusGloves = true;
+    private const bool UsingFinalIK = true;
+    private const bool TwistCorrection = true;
 
     void OnPostprocessMaterial(Material material)
     {
@@ -73,7 +74,7 @@ public class FixRocketboxMaxImport : AssetPostprocessor
             BoneUtilities.SearchHierarchyForBone(rootBone, "Bip01 R Thigh").SetParent(pelvis);
         }
 
-        fixBones(rootBone);
+        FixBones(rootBone);
 
         var importer = (ModelImporter)assetImporter;
         
@@ -83,7 +84,7 @@ public class FixRocketboxMaxImport : AssetPostprocessor
 
         importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
         importer.animationType = ModelImporterAnimationType.Human;
-        var avatarMappings = generateAvatarBoneMappings(g);
+        var avatarMappings = GenerateAvatarBoneMappings(g);
         importer.humanDescription = avatarMappings;
         var avatar = AvatarBuilder.BuildHumanAvatar(g, avatarMappings);
 
@@ -92,25 +93,25 @@ public class FixRocketboxMaxImport : AssetPostprocessor
    
 
         if (assetPath.ToLower().Contains("rocketbox")) {
-            if(g.GetComponent(typeof(AutoRigAvatar)) == null & usingAutoRig)
+            if(g.GetComponent(typeof(AutoRigAvatar)) == null & UsingAutoRig)
             {
                 var ik = g.AddComponent<AutoRigAvatar>();
-                if(usingFinalIK)
+                if(UsingFinalIK)
                 {
 
-                    ik.IKSetupChooser(AutoRigAvatar.ikSolver.FinalIK, g);
+                    ik.IKSetupChooser(AutoRigAvatar.IKSolver.FinalIK, g);
 
                 } else {
-                    ik.IKSetupChooser(AutoRigAvatar.ikSolver.UnityXR, g);
+                    ik.IKSetupChooser(AutoRigAvatar.IKSolver.UnityXR, g);
                 }
             }
 
-            if(g.GetComponent(typeof(AvatarManusHandSetup)) == null & usingManusGloves){
+            if(g.GetComponent(typeof(AvatarManusHandSetup)) == null & UsingManusGloves){
                 g.AddComponent<AvatarManusHandSetup>();
             }
         }
 
-        fixBones(rootBone);
+        FixBones(rootBone);
     }
 
     private void RenameBip(GameObject currentBone)
@@ -128,7 +129,7 @@ public class FixRocketboxMaxImport : AssetPostprocessor
     /// is true, divides the forearm bones into two pieces (for the FinalIK twist relaxers to work well, this needs to be done).
     /// </summary>
     /// <param name="avatarBase">The root of the avatar hierarchy.</param>
-    private void fixBones(Transform avatarBase)
+    private void FixBones(Transform avatarBase)
     {
         avatarBase.eulerAngles = new Vector3(-90, 90, 0);
 
@@ -140,27 +141,27 @@ public class FixRocketboxMaxImport : AssetPostprocessor
         BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R UpperArm").localEulerAngles = Vector3.zero;
         BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Forearm").localEulerAngles = Vector3.zero;
         BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Forearm").localEulerAngles = Vector3.zero;
-        if(BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Wrist") == null & twistCorrection)
+        if(BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Wrist") == null & TwistCorrection)
         {
-            var r_wrist = new GameObject();
-            r_wrist.name = "Bip01 R Wrist";
-            r_wrist.transform.SetParent(BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Forearm"));
+            var rWrist = new GameObject();
+            rWrist.name = "Bip01 R Wrist";
+            rWrist.transform.SetParent(BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Forearm"));
             
-            r_wrist.transform.position = (BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Forearm").position + BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Hand").position) / 2;
-            r_wrist.transform.localEulerAngles = Vector3.zero;
+            rWrist.transform.position = (BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Forearm").position + BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Hand").position) / 2;
+            rWrist.transform.localEulerAngles = Vector3.zero;
 
-            BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Hand").SetParent(r_wrist.transform);
+            BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Hand").SetParent(rWrist.transform);
         }
-        if(BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Wrist") == null & twistCorrection)
+        if(BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Wrist") == null & TwistCorrection)
         {
-            var l_wrist = new GameObject();
-            l_wrist.name = "Bip01 L Wrist";            
-            l_wrist.transform.SetParent(BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Forearm"));
+            var lWrist = new GameObject();
+            lWrist.name = "Bip01 L Wrist";            
+            lWrist.transform.SetParent(BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Forearm"));
 
-            l_wrist.transform.position = (BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Forearm").position + BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Hand").position) / 2;
-            l_wrist.transform.localEulerAngles = Vector3.zero;
+            lWrist.transform.position = (BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Forearm").position + BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Hand").position) / 2;
+            lWrist.transform.localEulerAngles = Vector3.zero;
             
-            BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Hand").SetParent(l_wrist.transform);
+            BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Hand").SetParent(lWrist.transform);
         }
 
         BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Hand").localEulerAngles = new Vector3(310, 340, 20);
@@ -195,7 +196,7 @@ public class FixRocketboxMaxImport : AssetPostprocessor
     /// </summary>
     /// <param name="g">The model with bones.</param>
     /// <returns>A mapped HumanDescription to be used in generating an avatar.</returns>
-    private HumanDescription generateAvatarBoneMappings(GameObject g)
+    private HumanDescription GenerateAvatarBoneMappings(GameObject g)
     {
         Dictionary<string, string> boneName = new System.Collections.Generic.Dictionary<string, string>();
         boneName["Hips"] = "Bip01 Pelvis";
@@ -308,25 +309,25 @@ public class FixRocketboxMaxImport : AssetPostprocessor
             }
 
             //Add additional bones for wrist to reduce mesh deformation
-            if(BoneUtilities.SearchHierarchyForBone(g.transform, "Bip01 R Wrist") != null & twistCorrection)
+            if(BoneUtilities.SearchHierarchyForBone(g.transform, "Bip01 R Wrist") != null & TwistCorrection)
             {
-                var right_wrist = new SkeletonBone();
-                right_wrist.name = "Bip01 R Wrist";
-                var right_wrist_transform = BoneUtilities.SearchHierarchyForBone(g.transform, right_wrist.name);
-                right_wrist.position = right_wrist_transform.localPosition;
-                right_wrist.rotation = right_wrist_transform.localRotation;
-                right_wrist.scale = BoneUtilities.SearchHierarchyForBone(g.transform, "Bip01 R Forearm").lossyScale;
-                skeletonBones.Add(right_wrist);
+                var rightWrist = new SkeletonBone();
+                rightWrist.name = "Bip01 R Wrist";
+                var rightWristTransform = BoneUtilities.SearchHierarchyForBone(g.transform, rightWrist.name);
+                rightWrist.position = rightWristTransform.localPosition;
+                rightWrist.rotation = rightWristTransform.localRotation;
+                rightWrist.scale = BoneUtilities.SearchHierarchyForBone(g.transform, "Bip01 R Forearm").lossyScale;
+                skeletonBones.Add(rightWrist);
             }
-            if(BoneUtilities.SearchHierarchyForBone(g.transform, "Bip01 L Wrist") != null & twistCorrection)
+            if(BoneUtilities.SearchHierarchyForBone(g.transform, "Bip01 L Wrist") != null & TwistCorrection)
             {
-                var left_wrist = new SkeletonBone();
-                left_wrist.name = "Bip01 L Wrist";
-                var left_wrist_transform = BoneUtilities.SearchHierarchyForBone(g.transform, left_wrist.name);
-                left_wrist.position = left_wrist_transform.localPosition;
-                left_wrist.rotation = left_wrist_transform.localRotation;
-                left_wrist.scale = BoneUtilities.SearchHierarchyForBone(g.transform, "Bip01 L Forearm").lossyScale;
-                skeletonBones.Add(left_wrist);
+                var leftWrist = new SkeletonBone();
+                leftWrist.name = "Bip01 L Wrist";
+                var leftWristTransform = BoneUtilities.SearchHierarchyForBone(g.transform, leftWrist.name);
+                leftWrist.position = leftWristTransform.localPosition;
+                leftWrist.rotation = leftWristTransform.localRotation;
+                leftWrist.scale = BoneUtilities.SearchHierarchyForBone(g.transform, "Bip01 L Forearm").lossyScale;
+                skeletonBones.Add(leftWrist);
             }
 
 

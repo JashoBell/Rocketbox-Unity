@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,77 +7,90 @@ using UnityEngine.Animations.Rigging;
 using System.Reflection;
 using UnityEditor;
 using System.IO;
+using AvatarUtilities;
 using RootMotion.FinalIK;
 using RootMotion.Demos;
 
 [ExecuteInEditMode]
 public class AutoRigAvatar : MonoBehaviour
 {
-    [SerializeField] bool bipedMapped = false;
-    public enum ikSolver {FinalIK, UnityXR};
+    [SerializeField] private bool bipedMapped = false;
+    public enum IKSolver {FinalIK, UnityXR};
 
-    public void IKSetupChooser(ikSolver ikSolver, GameObject g)
+    public void IKSetupChooser(IKSolver ikSolver, GameObject g)
     {
         switch (ikSolver){
-        case ikSolver.FinalIK:
+        case IKSolver.FinalIK:
         if(g.GetComponent(typeof(VRIK)) == null)
         {
             var obj = FinalIKSetup(g.gameObject);
             if(g.GetComponent(typeof(VRIKCalibrationController)) == null)
             {
-            var cal = g.AddComponent<VRIKCalibrationController>();
-            cal.ik = g.GetComponent<VRIK>();
+                var cal = g.AddComponent<VRIKCalibrationController>();
+                cal.ik = g.GetComponent<VRIK>();
             }
 
         }
         
         break;
-        case ikSolver.UnityXR: 
+        case IKSolver.UnityXR: 
         if(g.gameObject.GetComponent(typeof(RigBuilder)) == null)
         {
             var obj = AddIKConstraints(g);
             obj.transform.SetParent(g.transform);
         } 
         break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(ikSolver), ikSolver, null);
         }
         
 
         
     }
 
-    public GameObject FinalIKSetup(GameObject avatarBase)
+    private static GameObject FinalIKSetup(GameObject avatarBase)
     {
         var vrik = avatarBase.AddComponent<VRIK>();
         vrik.AutoDetectReferences();
         vrik.GuessHandOrientations();
         
-        var r_wrist = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Wrist");
-        var l_wrist = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Wrist");
-        if(BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Wrist") != null)
+        var rWrist = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Wrist");
+        var lWrist = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Wrist");
+        if (BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Wrist") == null) return avatarBase;
+        var twistRelaxerRight = rWrist.gameObject.AddComponent<TwistRelaxer>();
+
+        var twistSolverWristRight = new TwistSolver
         {
-            var twistRelaxerRight = r_wrist.gameObject.AddComponent<TwistRelaxer>();
+            transform = rWrist
+        };
+        var twistSolverForearmRight = new TwistSolver
+        {
+            transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Forearm")
+        };
+        var twistSolverUpperArmRight = new TwistSolver
+        {
+            transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R UpperArm")
+        };
 
-            var twistSolverWristRight = new TwistSolver();
-            twistSolverWristRight.transform = r_wrist;
-            var twistSolverForearmRight = new TwistSolver();
-            twistSolverForearmRight.transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Forearm");
-            var twistSolverUpperArmRight = new TwistSolver();
-            twistSolverUpperArmRight.transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R UpperArm");
+        twistRelaxerRight.twistSolvers = new TwistSolver[] {twistSolverWristRight, twistSolverForearmRight, twistSolverUpperArmRight};
+        twistRelaxerRight.ik = vrik;
 
-            twistRelaxerRight.twistSolvers = new TwistSolver[] {twistSolverWristRight, twistSolverForearmRight, twistSolverUpperArmRight};
-            twistRelaxerRight.ik = vrik;
+        var twistRelaxerLeft = lWrist.gameObject.AddComponent<TwistRelaxer>();
+        var twistSolverWristLeft = new TwistSolver
+        {
+            transform = lWrist
+        };
+        var twistSolverForearmLeft = new TwistSolver
+        {
+            transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Forearm")
+        };
+        var twistSolverUpperArmLeft = new TwistSolver
+        {
+            transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L UpperArm")
+        };
 
-            var twistRelaxerLeft = l_wrist.gameObject.AddComponent<TwistRelaxer>();
-            var twistSolverWristLeft = new TwistSolver();
-            twistSolverWristLeft.transform = l_wrist;
-            var twistSolverForearmLeft = new TwistSolver();
-            twistSolverForearmLeft.transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Forearm");
-            var twistSolverUpperArmLeft = new TwistSolver();
-            twistSolverUpperArmLeft.transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L UpperArm");
-
-            twistRelaxerLeft.twistSolvers = new TwistSolver[] {twistSolverWristLeft, twistSolverForearmLeft, twistSolverUpperArmLeft};
-            twistRelaxerLeft.ik = vrik;
-        }
+        twistRelaxerLeft.twistSolvers = new TwistSolver[] {twistSolverWristLeft, twistSolverForearmLeft, twistSolverUpperArmLeft};
+        twistRelaxerLeft.ik = vrik;
 
 
         return avatarBase;
@@ -85,91 +99,98 @@ public class AutoRigAvatar : MonoBehaviour
     private GameObject AddIKConstraints(GameObject avatarBase){
         
         
-
+        var baseTransform = avatarBase.transform;
         var rigBuilder = avatarBase.AddComponent<RigBuilder>();
 
-        var head = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 Head");
+        var head = BoneUtilities.SearchHierarchyForBone(baseTransform, "Bip01 Head");
         
-        var upperarm_l = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Upperarm");
-        var upperarm_r = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Upperarm");
+        var upperarmL = BoneUtilities.SearchHierarchyForBone(baseTransform, "Bip01 L Upperarm");
+        var upperarmR = BoneUtilities.SearchHierarchyForBone(baseTransform, "Bip01 R Upperarm");
 
-        var forearm_l = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Forearm");
-        var forearm_r = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Forearm");
+        var forearmL = BoneUtilities.SearchHierarchyForBone(baseTransform, "Bip01 L Forearm");
+        var forearmR = BoneUtilities.SearchHierarchyForBone(baseTransform, "Bip01 R Forearm");
         
-        var hand_l = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Hand");
-        var hand_r = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Hand");
+        var handL = BoneUtilities.SearchHierarchyForBone(baseTransform, "Bip01 L Hand");
+        var handR = BoneUtilities.SearchHierarchyForBone(baseTransform, "Bip01 R Hand");
 
-        var thigh_l = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Thigh");
-        var thigh_r = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Thigh");
+        var thighL = BoneUtilities.SearchHierarchyForBone(baseTransform, "Bip01 L Thigh");
+        var thighR = BoneUtilities.SearchHierarchyForBone(baseTransform, "Bip01 R Thigh");
 
-        var calf_l = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Calf");
-        var calf_r = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Calf");
+        var calfL = BoneUtilities.SearchHierarchyForBone(baseTransform, "Bip01 L Calf");
+        var calfR = BoneUtilities.SearchHierarchyForBone(baseTransform, "Bip01 R Calf");
 
-        var foot_l = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Foot");
-        var foot_r = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Foot");
+        var footL = BoneUtilities.SearchHierarchyForBone(baseTransform, "Bip01 L Foot");
+        var footR = BoneUtilities.SearchHierarchyForBone(baseTransform, "Bip01 R Foot");
 
         var constraintsRoot = new GameObject("ikConstraints");
         var rig = constraintsRoot.AddComponent<Rig>();
-
+        var constraintsRootTransform = constraintsRoot.transform;
+        
         rigBuilder.layers.Add(new RigLayer(rig, true));
         
-        var forearmConstraintLeft = ArmIK("left_forearm", upperarm_l.gameObject, forearm_l.gameObject, hand_l.gameObject);
-        var forearmConstraintRight = ArmIK("right_forearm", upperarm_r.gameObject, forearm_r.gameObject, hand_r.gameObject);
+        var forearmConstraintLeft = ArmIK("left_forearm", upperarmL.gameObject, forearmL.gameObject, handL.gameObject);
+        var forearmConstraintRight = ArmIK("right_forearm", upperarmR.gameObject, forearmR.gameObject, handR.gameObject);
 
-        forearmConstraintLeft.transform.SetParent(constraintsRoot.transform);
-        forearmConstraintRight.transform.SetParent(constraintsRoot.transform);
+        forearmConstraintLeft.transform.SetParent(constraintsRootTransform);
+        forearmConstraintRight.transform.SetParent(constraintsRootTransform);
 
-        var handConstraintLeft = SetupTwoBoneIK("left_hand", upperarm_l.gameObject, forearm_l.gameObject, hand_l.gameObject);
-        var handConstraintRight = SetupTwoBoneIK("right_hand", upperarm_r.gameObject, forearm_r.gameObject, hand_r.gameObject);
+        var handConstraintLeft = SetupTwoBoneIK("left_hand", upperarmL.gameObject, forearmL.gameObject, handL.gameObject);
+        var handConstraintRight = SetupTwoBoneIK("right_hand", upperarmR.gameObject, forearmR.gameObject, handR.gameObject);
 
-        handConstraintLeft.transform.SetParent(constraintsRoot.transform);
-        handConstraintRight.transform.SetParent(constraintsRoot.transform);
+        handConstraintLeft.transform.SetParent(constraintsRootTransform);
+        handConstraintRight.transform.SetParent(constraintsRootTransform);
 
-        var footConstraintLeft = SetupTwoBoneIK("left_foot", thigh_l.gameObject, calf_l.gameObject, foot_l.gameObject);
-        var footConstraintRight = SetupTwoBoneIK("right_foot", thigh_r.gameObject, calf_r.gameObject, foot_r.gameObject);
+        var footConstraintLeft = SetupTwoBoneIK("left_foot", thighL.gameObject, calfL.gameObject, footL.gameObject);
+        var footConstraintRight = SetupTwoBoneIK("right_foot", thighR.gameObject, calfR.gameObject, footR.gameObject);
 
-        footConstraintLeft.transform.SetParent(constraintsRoot.transform);
-        footConstraintRight.transform.SetParent(constraintsRoot.transform);
+        footConstraintLeft.transform.SetParent(constraintsRootTransform);
+        footConstraintRight.transform.SetParent(constraintsRootTransform);
 
         var headConstraint = HeadIK(head.gameObject);
 
-        headConstraint.transform.SetParent(constraintsRoot.transform);
+        headConstraint.transform.SetParent(constraintsRootTransform);
 
         return constraintsRoot;
     }
 
-    private GameObject SetupTwoBoneIK(string name, GameObject root, GameObject mid, GameObject tip)
+    private GameObject SetupTwoBoneIK(string targetname, GameObject root, GameObject mid, GameObject tip)
     {
         
-        GameObject hand = new GameObject(name);
-        
-        var twoboneIK = hand.AddComponent<TwoBoneIKConstraint>();
+        GameObject hand = new (targetname);
 
-        twoboneIK.data.tip = tip.transform;
-        twoboneIK.data.mid = mid.transform;
-        twoboneIK.data.root = root.transform;
 
         //Twobone IK needs a target to aim for, and a hint to assist bending of the limb
-
-        var target = new GameObject(name + "_target");
-        var hint = new GameObject(name + "_hint");
+        GameObject target = new (targetname + "_target");
+        GameObject hint = new (targetname + "_hint");
 
         target.transform.SetParent(hand.transform);
         hint.transform.SetParent(hand.transform);
+        
 
+        
+        var twoboneIK = hand.AddComponent<TwoBoneIKConstraint>();
+        
+        var midtransform = mid.transform;
+        var midposition = midtransform.position;
+        
+        twoboneIK.data.tip = tip.transform;
+        twoboneIK.data.mid = mid.transform;
+        twoboneIK.data.root = root.transform;
         twoboneIK.data.target = target.transform;
         twoboneIK.data.hint = hint.transform;
+        
+
 
         target.transform.position = tip.transform.position;
         target.transform.rotation = tip.transform.rotation;
 
         //Hint should be placed where limb should bend
 
-        if(name.ToLower().Contains("foot")){
-            hint.transform.position = new Vector3(mid.transform.position.x, mid.transform.position.y+.5f, mid.transform.position.z + 1f);
-        } else if(name.ToLower().Contains("hand"))
+        if(targetname.ToLower().Contains("foot")){
+            hint.transform.position = new Vector3(midposition.x, midposition.y+.5f, midposition.z + 1f);
+        } else if(targetname.ToLower().Contains("hand"))
         {
-            hint.transform.position = new Vector3(mid.transform.position.x, mid.transform.position.y, mid.transform.position.z - .1f);
+            hint.transform.position = new Vector3(midposition.x, midposition.y, midposition.z - .1f);
         }
         
 
@@ -178,41 +199,42 @@ public class AutoRigAvatar : MonoBehaviour
 
     //Adds a multi-rotational constraint to the forearm such that it matches the x rotation of the hand, ensuring that the wrist does not deform during reaches.
 
-    private GameObject ArmIK(string name, GameObject upperarm_, GameObject forearm_, GameObject hand_)
+    private static GameObject ArmIK(string objname, GameObject upperarm, GameObject forearm, GameObject hand)
     {
-        GameObject forearm = new GameObject(name);
+        GameObject forearmIK = new (objname);
 
-        var armIK = forearm.AddComponent<TwistCorrection>();
+        var armIK = forearmIK.AddComponent<TwistCorrection>();
 
-        armIK.data.sourceObject = hand_.transform;
-        var transforms = new WeightedTransformArray();
-        transforms.Add(new WeightedTransform(forearm_.transform, .75f));
-        transforms.Add(new WeightedTransform(upperarm_.transform, .25f));
+        armIK.data.sourceObject = hand.transform;
+        var transforms = new WeightedTransformArray
+        {
+            new (forearm.transform, .75f),
+            new (upperarm.transform, .25f)
+        };
         armIK.data.twistNodes = transforms;
 
         armIK.data.twistAxis = TwistCorrectionData.Axis.X;
 
-        return forearm;
+        return forearmIK;
     }
 
-    private GameObject HeadIK(GameObject headbone)
+    private static GameObject HeadIK(GameObject headbone)
     {
-        GameObject head_ = new GameObject("head");
-        GameObject head_target = new GameObject("head_target");
-        head_target.transform.SetParent(head_.transform);
-        head_target.transform.position = headbone.transform.position;
-        head_target.transform.rotation = headbone.transform.rotation;
+        GameObject head = new ("head");
+        GameObject headTarget = new ("head_target");
+        headTarget.transform.SetParent(head.transform);
+        headTarget.transform.position = headbone.transform.position;
+        headTarget.transform.rotation = headbone.transform.rotation;
         
 
-        var headIK = head_.AddComponent<MultiParentConstraint>();
+        var headIK = head.AddComponent<MultiParentConstraint>();
         headIK.data.constrainedObject = headbone.transform;
         
-        var transforms = new WeightedTransformArray();
-        transforms.Add(new WeightedTransform(head_target.transform, 1));
+        var transforms = new WeightedTransformArray { new (headTarget.transform, 1) };
 
         headIK.data.sourceObjects = transforms;
 
-        return head_;
+        return head;
     }
 
 }
