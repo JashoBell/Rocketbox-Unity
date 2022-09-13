@@ -109,8 +109,8 @@ public class FixRocketboxMaxImport : AssetPostprocessor
 
             fixBones(rootBone);
         }
-
-        private void RenameBip(GameObject currentBone)
+    }
+    private void RenameBip(GameObject currentBone)
         {
             currentBone.name = currentBone.name.Replace("Bip02", "Bip01");
             for (int i = 0; i < currentBone.transform.childCount; i++)
@@ -138,18 +138,12 @@ public class FixRocketboxMaxImport : AssetPostprocessor
             BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Forearm").localEulerAngles = Vector3.zero;
             BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Forearm").localEulerAngles = Vector3.zero;
             if (BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Wrist") == null & twistCorrection)
-            {
-<<<<<<< Updated upstream
-                var r_wrist = new GameObject();
-                r_wrist.name = "Bip01 R Wrist";
-                r_wrist.transform.SetParent(BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Forearm"));
-=======
+        {
             var rWrist = new GameObject
             {
                 name = "Bip01 R Wrist"
             };
             rWrist.transform.SetParent(BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Forearm"));
->>>>>>> Stashed changes
 
                 r_wrist.transform.position = (BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Forearm").position + BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Hand").position) / 2;
                 r_wrist.transform.localEulerAngles = Vector3.zero;
@@ -157,19 +151,12 @@ public class FixRocketboxMaxImport : AssetPostprocessor
                 BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Hand").SetParent(r_wrist.transform);
             }
             if (BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Wrist") == null & twistCorrection)
-            {
-<<<<<<< Updated upstream
-                var l_wrist = new GameObject();
-                l_wrist.name = "Bip01 L Wrist";
-                l_wrist.transform.SetParent(BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Forearm"));
-
-=======
+        {
             var lWrist = new GameObject
             {
                 name = "Bip01 L Wrist"
             };
             lWrist.transform.SetParent(BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Forearm"));
->>>>>>> Stashed changes
                 l_wrist.transform.position = (BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Forearm").position + BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Hand").position) / 2;
                 l_wrist.transform.localEulerAngles = Vector3.zero;
 
@@ -200,15 +187,16 @@ public class FixRocketboxMaxImport : AssetPostprocessor
             BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Finger21").localEulerAngles = new Vector3(0, 0, -4);
             BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Finger31").localEulerAngles = new Vector3(0, 0, -4);
             BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Finger41").localEulerAngles = new Vector3(0, 0, -4);
-        }
+    }
 
-        /// <summary>
-        /// Pairs the model's bones with avatar bones and forms a human description. If "twistCorrection" is true,
-        /// additionally adds a "wrist bone" to help with mesh deformation upon twisting.
-        /// </summary>
-        /// <param name="g">The model with bones.</param>
-        /// <returns>A mapped HumanDescription to be used in generating an avatar.</returns>
-        private HumanDescription generateAvatarBoneMappings(GameObject g)
+
+    /// <summary>
+    /// Pairs the model's bones with avatar bones and forms a human description. If "twistCorrection" is true,
+    /// additionally adds a "wrist bone" to help with mesh deformation upon twisting.
+    /// </summary>
+    /// <param name="g">The model with bones.</param>
+    /// <returns>A mapped HumanDescription to be used in generating an avatar.</returns>
+    private HumanDescription generateAvatarBoneMappings(GameObject g)
         {
             Dictionary<string, string> boneName = new System.Collections.Generic.Dictionary<string, string>
             {
@@ -320,16 +308,7 @@ public class FixRocketboxMaxImport : AssetPostprocessor
 
                 //Add additional bones for wrist to reduce mesh deformation
                 if (BoneUtilities.SearchHierarchyForBone(g.transform, "Bip01 R Wrist") != null & twistCorrection)
-                {
-<<<<<<< Updated upstream
-                    var right_wrist = new SkeletonBone();
-                    right_wrist.name = "Bip01 R Wrist";
-                    var right_wrist_transform = BoneUtilities.SearchHierarchyForBone(g.transform, right_wrist.name);
-                    right_wrist.position = right_wrist_transform.localPosition;
-                    right_wrist.rotation = right_wrist_transform.localRotation;
-                    right_wrist.scale = BoneUtilities.SearchHierarchyForBone(g.transform, "Bip01 R Forearm").lossyScale;
-                    skeletonBones.Add(right_wrist);
-=======
+            {
                 var rightWrist = new SkeletonBone
                 {
                     name = "Bip01 R Wrist"
@@ -339,19 +318,9 @@ public class FixRocketboxMaxImport : AssetPostprocessor
                 rightWrist.rotation = rightWristTransform.localRotation;
                 rightWrist.scale = BoneUtilities.SearchHierarchyForBone(g.transform, "Bip01 R Forearm").lossyScale;
                 skeletonBones.Add(rightWrist);
->>>>>>> Stashed changes
                 }
                 if (BoneUtilities.SearchHierarchyForBone(g.transform, "Bip01 L Wrist") != null & twistCorrection)
-                {
-<<<<<<< Updated upstream
-                    var left_wrist = new SkeletonBone();
-                    left_wrist.name = "Bip01 L Wrist";
-                    var left_wrist_transform = BoneUtilities.SearchHierarchyForBone(g.transform, left_wrist.name);
-                    left_wrist.position = left_wrist_transform.localPosition;
-                    left_wrist.rotation = left_wrist_transform.localRotation;
-                    left_wrist.scale = BoneUtilities.SearchHierarchyForBone(g.transform, "Bip01 L Forearm").lossyScale;
-                    skeletonBones.Add(left_wrist);
-=======
+            {
                 var leftWrist = new SkeletonBone
                 {
                     name = "Bip01 L Wrist"
@@ -361,7 +330,6 @@ public class FixRocketboxMaxImport : AssetPostprocessor
                 leftWrist.rotation = leftWristTransform.localRotation;
                 leftWrist.scale = BoneUtilities.SearchHierarchyForBone(g.transform, "Bip01 L Forearm").lossyScale;
                 skeletonBones.Add(leftWrist);
->>>>>>> Stashed changes
                 }
 
 
