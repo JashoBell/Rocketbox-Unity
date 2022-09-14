@@ -49,6 +49,7 @@ public class AutoRigAvatar : MonoBehaviour
         var vrik = avatarBase.AddComponent<VRIK>();
         vrik.AutoDetectReferences();
         vrik.GuessHandOrientations();
+        vrik.solver.locomotion.weight = 0.3f;
         
         var r_wrist = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Wrist");
         var l_wrist = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Wrist");
