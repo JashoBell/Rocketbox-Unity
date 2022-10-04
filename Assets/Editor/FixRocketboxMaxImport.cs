@@ -79,7 +79,8 @@ public class FixRocketboxMaxImport : AssetPostprocessor
 
         if (g.GetComponent(typeof(AvatarManusHandSetup)) == null & _usingManusGloves)
         {
-            g.AddComponent<AvatarManusHandSetup>();
+            var manus = g.AddComponent<AvatarManusHandSetup>();
+            manus.ImportSetup();
         }
 
 
@@ -158,8 +159,10 @@ public class FixRocketboxMaxImport : AssetPostprocessor
         }
         
         // Fix the finger bones, adding a very slight curl to the tips
-        BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Hand").localEulerAngles = new Vector3(310, 340, 20);
-        BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Finger0").localEulerAngles = new Vector3(87, -31, 8);
+        BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Hand").localEulerAngles =
+            assetPath.ToLower().Contains("female") ? new Vector3(-50, -20, 20) : new Vector3(-52, -5, 5.5f);
+        BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Finger0").localEulerAngles =
+            assetPath.ToLower().Contains("female") ? new Vector3(87, -31, 8) : new Vector3(55, -31, 8);
         BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Finger1").localEulerAngles = new Vector3(4, 4, -3);
         BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Finger2").localEulerAngles = new Vector3(-13, 7, -6);
         BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Finger3").localEulerAngles = new Vector3(-15, 7, -6);
@@ -171,8 +174,10 @@ public class FixRocketboxMaxImport : AssetPostprocessor
         BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 L Finger41").localEulerAngles = new Vector3(0, 0, -4);
 
 
-        BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Hand").localEulerAngles = new Vector3(50, 20, 20);
-        BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Finger0").localEulerAngles = new Vector3(-87, 31, 8);
+        BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Hand").localEulerAngles =
+            assetPath.ToLower().Contains("female") ? new Vector3(50, 20, 20) : new Vector3(52, 5, 5.5f);
+        BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Finger0").localEulerAngles = 
+            assetPath.ToLower().Contains("female") ? new Vector3(-87, 31, 8) : new Vector3(-55, 31, 8);
         BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Finger1").localEulerAngles = new Vector3(-4, -4, -3);
         BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Finger2").localEulerAngles = new Vector3(13, -7, -6);
         BoneUtilities.SearchHierarchyForBone(avatarBase, "Bip01 R Finger3").localEulerAngles = new Vector3(15, -7, -6);

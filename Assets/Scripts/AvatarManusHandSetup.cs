@@ -3,39 +3,43 @@ using System.Collections.Generic;
 using UnityEngine;
 using Manus.Hand;
 
-[ExecuteInEditMode]
 public class AvatarManusHandSetup : MonoBehaviour
 {
-    private void Awake()
+    public void ImportSetup()
     {
-        if (!(GameObject.Find("right_hand_tracker") != null & GameObject.Find("left_hand_tracker") != null)) return;
+
         var g = this.gameObject;
         var rHand = FindHand(g, "right");
         var lHand = FindHand(g, "left");
+
+
+        if(lHand.GetComponent(typeof(HandAnimator)) == null)
+        {
+            AttachManusHandAnimator(lHand, "left");
+        } 
+        if(rHand.GetComponent(typeof(HandAnimator)) == null)
+        {
+            AttachManusHandAnimator(rHand, "right");
+        }
+    }
+
+
+    public void AttachHands()
+    {
+        if (!(GameObject.Find("right_hand_tracker") != null & GameObject.Find("left_hand_tracker") != null)) return;
         var rHandTarget = GameObject.Find("right_hand_tracker");
         var lHandTarget = GameObject.Find("left_hand_tracker");
 
         if(lHandTarget.GetComponent(typeof(Hand)) == null)
         {
-            lHandTarget = AttachManusHand(lHandTarget, "left");
+            AttachManusHand(lHandTarget, "left");
         }
         if(rHandTarget.GetComponent(typeof(Hand)) == null)
         {
-            rHandTarget = AttachManusHand(rHandTarget, "right");
+            AttachManusHand(rHandTarget, "right");
         }
-
-        if(lHand.GetComponent(typeof(HandAnimator)) == null)
-        {
-            lHand = AttachManusHandAnimator(lHand, "left");
-        } 
-        if(rHand.GetComponent(typeof(HandAnimator)) == null)
-        {
-            rHand = AttachManusHandAnimator(rHand, "right");
-        }
-
-
-
     }
+
 
     public GameObject FindHand(GameObject root, string side)
     {
@@ -46,6 +50,7 @@ public class AvatarManusHandSetup : MonoBehaviour
         return side == "right" ? handR.gameObject : handL.gameObject;
  
     }
+
 
     public GameObject AttachManusHandAnimator(GameObject hand_, string side)
     {
@@ -67,6 +72,7 @@ public class AvatarManusHandSetup : MonoBehaviour
         return hand;
     }
     
+
     public GameObject AttachManusHand(GameObject handTarget, string side)
     {
         
