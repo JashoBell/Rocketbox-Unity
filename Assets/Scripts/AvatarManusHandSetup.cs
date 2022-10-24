@@ -7,8 +7,12 @@ using UnityEngine;
 using Manus;
 using Manus.Skeletons;
 
+
+
 public class AvatarManusHandSetup : MonoBehaviour
 {
+
+    readonly bool _addAntiScaleBone = true;
     public void ImportSetup()
     {
 
@@ -16,7 +20,12 @@ public class AvatarManusHandSetup : MonoBehaviour
         var rHand = FindHand(g, "right");
         var lHand = FindHand(g, "left");
 
-        
+        // if(_addAntiScaleBone)
+        // {
+        //     AddAntiScaleBone(rHand.transform, "right");
+        //     AddAntiScaleBone(lHand.transform, "left");
+        // }
+
         if(lHand.GetComponent(typeof(Skeleton)) == null)
         {
             AttachManusHandAnimator(lHand, "left");
@@ -27,6 +36,34 @@ public class AvatarManusHandSetup : MonoBehaviour
         } 
         
     }
+
+
+            /// <summary>
+    /// Adds a child to the hand that is parent to the fingers and used to counteract the scale added by its parents.
+    /// </summary>
+    /// <param name="hand"></param>
+    /// <param name="side"></param>
+    // /// <returns></returns>
+    // private GameObject AddAntiScaleBone(Transform hand, string side)
+    // {
+    //     var antiScaleBone = new GameObject(side + "hand_antiScaleBone");
+    //     antiScaleBone.transform.parent = hand;
+    //     antiScaleBone.transform.localPosition = Vector3.zero;
+    //     antiScaleBone.transform.localRotation = Quaternion.identity;
+    //     antiScaleBone.transform.localScale = new Vector3(1/hand.transform.lossyScale.x, 1, 1);
+
+    //     for(int i = hand.childCount -1; i >= 0; --i)
+    //     {
+    //         print(i);    
+    //         print(hand.GetChild(i).name);
+    //         if(hand.GetChild(i).name.Contains("Finger"))
+    //         {
+    //             hand.GetChild(i).parent = antiScaleBone.transform;
+    //         }
+    //     }
+
+    //     return antiScaleBone;
+    // }
 
 
     public void AttachHands()
@@ -151,9 +188,10 @@ public class AvatarManusHandSetup : MonoBehaviour
         
         // Set up skeleton settings, create the skeletonData object to add to the Skeleton component, and set up nodes.
         var skeletonSettings = new CoreSDK.SkeletonSettings();
-        skeletonSettings.targetType = CoreSDK.SkeletonTargetType.GloveData;
-        skeletonSettings.skeletonTargetGloveData.id = (uint)(side == "right" ? 0 : 1);
-        skeletonSettings.scaleToTarget = true;
+        skeletonSettings.targetType = CoreSDK.SkeletonTargetType.UserData;
+        skeletonSettings.useEndPointApproximations = true;
+        skeletonSettings.skeletonTargetUserData.id = 0;
+        skeletonSettings.scaleToTarget = false;
 
         handAnimator.skeletonData = new SkeletonData
         {
