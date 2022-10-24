@@ -16,8 +16,8 @@ public class FixRocketboxMaxImport : AssetPostprocessor
     private bool _usingFinalIK = true;
     private bool _twistCorrection = true;
     
-    static readonly string _skinMaterialPath = "Assets/Avatars/Rocketbox-Unity/Assets/Resources/Skin.mat";
-    static readonly string _hairMaterialPath = "Assets/Avatars/Rocketbox-Unity/Assets/Resources/Hair.mat";
+    static readonly string _skinMaterialPath = "Assets/Avatars/Rocketbox-Unity/Assets/Resources/Materials/Skin.mat";
+    static readonly string _hairMaterialPath = "Assets/Avatars/Rocketbox-Unity/Assets/Resources/Materials/Hair.mat";
     private static readonly int Mode = Shader.PropertyToID("_Mode");
     private static readonly int DiffusionProfileHash = Shader.PropertyToID("_DiffusionProfileHash");
 
