@@ -6,10 +6,20 @@ using System.Linq;
 
 public class FixRocketboxMaxImport : AssetPostprocessor
 {
+    // True will attach the AutoRigAvatar script to the avatar and use it to attach IK components.
     private bool _usingAutoRig = true;
+
+    // True will attach Manus components to the avatar.
     private bool _usingManusGloves = true;
+
+    // True will attach FinalIK components to the avatar.
     private bool _usingFinalIK = true;
+
+    // Generate wrist bones to help with IK.
     private bool _twistCorrection = true;
+
+    // Generate finger tips for the avatar. This is useful for the Manus gloves, which assume fingertips are present.
+    private bool _createFingerTips = true;
 
     private void OnPostprocessMaterial(Material material)
     {
@@ -66,7 +76,7 @@ public class FixRocketboxMaxImport : AssetPostprocessor
         importer.avatarSetup = ModelImporterAvatarSetup.CreateFromThisModel;
         importer.animationType = ModelImporterAnimationType.Human;
 
-        var avatarMappings = BoneUtilities.AvatarSkeletonCorrection(rootBone, assetPath, _twistCorrection);
+        var avatarMappings = BoneUtilities.AvatarSkeletonCorrection(rootBone, assetPath, _twistCorrection, _createFingerTips);
         importer.humanDescription = avatarMappings;
         importer.SaveAndReimport();
         

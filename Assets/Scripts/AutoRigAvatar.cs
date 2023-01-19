@@ -15,6 +15,11 @@ public class AutoRigAvatar : MonoBehaviour
     [SerializeField] bool bipedMapped = false;
     public enum IKSolver {FinalIK, UnityXR};
 
+    /// <summary>
+    /// Sets up the avatar's rigging and IK components.
+    /// </summary>
+    /// <param name="ikSolver">Enum selecting an IK framework</param>
+    /// <param name="g">The avatar root</param>
     public void IKSetupChooser(IKSolver ikSolver, GameObject g)
     {
         switch (ikSolver){
@@ -44,11 +49,17 @@ public class AutoRigAvatar : MonoBehaviour
         
     }
 
+    /// <summary>
+    /// Setup for the FinalIK VRIK component. Performs the initial setup of the VRIK component and adds the TwistRelaxer component to the wrists.
+    /// </summary>
+    /// <param name="avatarBase"></param>
+    /// <returns></returns>
     public GameObject FinalIKSetup(GameObject avatarBase)
     {
         var vrik = avatarBase.AddComponent<VRIK>();
         vrik.AutoDetectReferences();
         vrik.GuessHandOrientations();
+        vrik.solver.plantFeet = false;
         vrik.solver.locomotion.weight = 0.3f;
         
         var rWrist = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Wrist");
@@ -83,6 +94,9 @@ public class AutoRigAvatar : MonoBehaviour
         return avatarBase;
     }
 
+    /// <summary>
+    /// Sets up the RigBuilder component and adds the IK constraints to the avatar.
+    /// </summary>
     private GameObject AddIKConstraints(GameObject avatarBase){
         
         
@@ -139,6 +153,9 @@ public class AutoRigAvatar : MonoBehaviour
         return constraintsRoot;
     }
 
+    /// <summary>
+    /// Sets up the arm IK constraint for Unity's IK.
+    /// </summary>
     private GameObject SetupTwoBoneIK(string name, GameObject root, GameObject mid, GameObject tip)
     {
         
@@ -177,8 +194,14 @@ public class AutoRigAvatar : MonoBehaviour
         return hand;
     }
 
-    //Adds a multi-rotational constraint to the forearm such that it matches the x rotation of the hand, ensuring that the wrist does not deform during reaches.
-
+    /// <summary>
+    /// Adds a twist correction constraint to the arm using the Unity IK approach.
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="upperarm"></param>
+    /// <param name="forearm"></param>
+    /// <param name="hand"></param>
+    /// <returns></returns>
     private GameObject ArmIK(string name, GameObject upperarm, GameObject forearm, GameObject hand)
     {
         GameObject _forearm = new GameObject(name);
@@ -198,6 +221,11 @@ public class AutoRigAvatar : MonoBehaviour
         return forearm;
     }
 
+    /// <summary>
+    /// Sets up the head IK constraint for Unity's IK.
+    /// </summary>
+    /// <param name="headbone"></param>
+    /// <returns></returns>
     private GameObject HeadIK(GameObject headbone)
     {
         GameObject head = new GameObject("head");

@@ -100,11 +100,11 @@ public class AvatarManusHandSetup : MonoBehaviour
         List<uint> nodes = type switch
         {
             CoreSDK.ChainType.Hand => new List<uint>() {0},
-            CoreSDK.ChainType.FingerThumb => new List<uint> { 1, 2, 3 },
-            CoreSDK.ChainType.FingerIndex => new List<uint> { 4, 5, 6 },
-            CoreSDK.ChainType.FingerMiddle => new List<uint> { 7, 8, 9 },
-            CoreSDK.ChainType.FingerRing => new List<uint> { 10, 11, 12 },
-            CoreSDK.ChainType.FingerPinky => new List<uint> { 13, 14, 15 },
+            CoreSDK.ChainType.FingerThumb => new List<uint> { 1, 2, 3, 4},
+            CoreSDK.ChainType.FingerIndex => new List<uint> {5, 6, 7, 8},
+            CoreSDK.ChainType.FingerMiddle => new List<uint> {9, 10, 11, 12},
+            CoreSDK.ChainType.FingerRing => new List<uint> {13, 14, 15, 16},
+            CoreSDK.ChainType.FingerPinky => new List<uint> {17, 18, 19, 20},
             _ => new List<uint>()
         };
         uint id = type switch
