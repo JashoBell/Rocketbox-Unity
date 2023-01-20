@@ -1,12 +1,13 @@
 ### Note
-This is a fork of Microsoft's Rocketbox Library that aims to prepare the adult Rocketbox avatars for use as a self-avatar in Unity-based experiments, such that a participant could choose from the full catalog prior to the beginning of the experiment, as opposed to receiving a single, rigged avatar that the experimenters may have chosen.
+This is a fork of Microsoft's Rocketbox Library that aims to prepare the adult Rocketbox avatars for use as a self-avatar in Unity-based experiments, such that experimenters could make the full catalog available in an experiment.
   
-Changes from the original include:
-- Unity Bone/import fixes: Might have been my own specific case, but the avatars were all deformed on import with the main repo (the arms were lower than they should have been after the clavicle changes). That is fixed here (at least, it is for me!).
-- Basic rigging: Adds IK constraints to the avatar GameObject. Can choose [FinalIK](https://assetstore.unity.com/packages/tools/animation/final-ik-14290) or vanilla [Unity](https://docs.unity3d.com/Packages/com.unity.animation.rigging@1.2/manual/index.html) using a boolean at the top of "FixRocketboxMaxImport". Note: the Unity rig is not optimal, and is essentially just put together from tutorial videos [such as this one](https://www.youtube.com/watch?v=MYOjQICbd8I). I went with FinalIK for my own study because it would take me quite a while of tweaking to get the Unity IK constraints to work even close to that well.
-- Manus integration: I'm using Manus gloves for my upcoming study, so set-up for those is optionally included here as well.
-
-Left to the experimenter would be the assignment of trackers and IK targets to the correct locations. Since that can be done fairly simply and set-ups will wildly differ between studies, I've left that part out.
+Changes from the original repo include:
+- Fix for [this issue](https://github.com/microsoft/Microsoft-Rocketbox/issues/13) with the avatar import.
+- Additional code to prepare the avatars for use with the [FinalIK](https://assetstore.unity.com/packages/tools/animation/final-ik-14290) plugin and the [Manus Quantum Metagloves](https://www.manus-meta.com/products/quantum-metagloves).
+- Optional Additions:
+    - An additional bone added to the wrist for FinalIK's twist correction.
+        - The twist correction makes wrist rotations less horrific.
+    - Fingertip bones added to the hands for [Manus Quantum Metagloves/Manus Core 2.0](https://www.manus-meta.com/products/quantum-metagloves).
 
 ## MICROSOFT ROCKETBOX AVATAR LIBRARY
 The Microsoft Rocketbox Avatar library consists of 115 characters and avatars fully rigged and with high definition that was developed over the course of 10 years. The diversity of the characters and the quality of the rigging together with a relatively low-poly meshes, makes this library the go-to asset among research laboratories worldwide from crowd simulation to real-time avatar embodiment and social Virtual Reality (VR). Ever since their launch, laboratories around the globe have been using the library and many of the lead authors in the VR community have extensively used these avatars during their research.
