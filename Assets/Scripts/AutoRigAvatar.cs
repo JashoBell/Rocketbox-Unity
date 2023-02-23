@@ -13,6 +13,7 @@ using RootMotion.Demos;
 public class AutoRigAvatar : MonoBehaviour
 {
     [SerializeField] bool bipedMapped = false;
+    public GameObject VRIKPrefabAvatar;
     public enum IKSolver {FinalIK, UnityXR};
 
     /// <summary>
@@ -27,12 +28,6 @@ public class AutoRigAvatar : MonoBehaviour
         if(g.GetComponent(typeof(VRIK)) == null)
         {
             var obj = FinalIKSetup(g.gameObject);
-            if(g.GetComponent(typeof(VRIKCalibrationController)) == null)
-            {
-            var cal = g.AddComponent<VRIKCalibrationController>();
-            cal.ik = g.GetComponent<VRIK>();
-            }
-
         }
         
         break;
@@ -57,10 +52,10 @@ public class AutoRigAvatar : MonoBehaviour
     public GameObject FinalIKSetup(GameObject avatarBase)
     {
         var vrik = avatarBase.AddComponent<VRIK>();
+        VRIKPrefabAvatar = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Plugins/RootMotion/Shared Demo Assets/Characters/Pilot/Pilot (Procedural locomotion).prefab");
         vrik.AutoDetectReferences();
         vrik.GuessHandOrientations();
-        vrik.solver.plantFeet = false;
-        vrik.solver.locomotion.weight = 0.3f;
+        ConfigureFinalIKSolver(avatarBase);
         
         var rWrist = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Wrist");
         var lWrist = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Wrist");
@@ -68,23 +63,42 @@ public class AutoRigAvatar : MonoBehaviour
         {
             var twistRelaxerRight = rWrist.gameObject.AddComponent<TwistRelaxer>();
 
-            var twistSolverWristRight = new TwistSolver();
-            twistSolverWristRight.transform = rWrist;
-            var twistSolverForearmRight = new TwistSolver();
-            twistSolverForearmRight.transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Forearm");
-            var twistSolverUpperArmRight = new TwistSolver();
-            twistSolverUpperArmRight.transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R UpperArm");
+            var twistSolverWristRight = new TwistSolver
+            {
+                transform = rWrist,
+                parentChildCrossfade = 1f
+            };
+            var twistSolverForearmRight = new TwistSolver
+            {
+                transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R Forearm"),
+                parentChildCrossfade = .6f
+            };
+            var twistSolverUpperArmRight = new TwistSolver
+            {
+                transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 R UpperArm"),
+                parentChildCrossfade = .4f
+            };
 
             twistRelaxerRight.twistSolvers = new TwistSolver[] {twistSolverWristRight, twistSolverForearmRight, twistSolverUpperArmRight};
             twistRelaxerRight.ik = vrik;
 
             var twistRelaxerLeft = lWrist.gameObject.AddComponent<TwistRelaxer>();
-            var twistSolverWristLeft = new TwistSolver();
-            twistSolverWristLeft.transform = lWrist;
-            var twistSolverForearmLeft = new TwistSolver();
-            twistSolverForearmLeft.transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Forearm");
-            var twistSolverUpperArmLeft = new TwistSolver();
-            twistSolverUpperArmLeft.transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L UpperArm");
+            var twistSolverWristLeft = new TwistSolver
+            {
+                transform = lWrist,
+                parentChildCrossfade = 1f,
+                twistAngleOffset = 40f
+            };
+            var twistSolverForearmLeft = new TwistSolver
+            {
+                transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L Forearm"),
+                parentChildCrossfade = .6f
+            };
+            var twistSolverUpperArmLeft = new TwistSolver
+            {
+                transform = BoneUtilities.SearchHierarchyForBone(avatarBase.transform, "Bip01 L UpperArm"),
+                parentChildCrossfade = .4f
+            };
 
             twistRelaxerLeft.twistSolvers = new TwistSolver[] {twistSolverWristLeft, twistSolverForearmLeft, twistSolverUpperArmLeft};
             twistRelaxerLeft.ik = vrik;
@@ -92,6 +106,51 @@ public class AutoRigAvatar : MonoBehaviour
 
 
         return avatarBase;
+    }
+
+
+    public void ConfigureFinalIKSolver(GameObject avatarObj)
+    {
+        var ikRig = avatarObj.GetComponent<VRIK>().solver;
+        ikRig.plantFeet = false;
+        FinalIKLocomotion(avatarObj, false);
+        ikRig.spine.maxRootAngle = 20f;
+        ikRig.spine.bodyPosStiffness = .3f;
+        ikRig.spine.bodyRotStiffness = 0f;
+        ikRig.spine.neckStiffness = 0.10f;
+        ikRig.leftArm.stretchCurve = VRIKPrefabAvatar.GetComponent<VRIK>().solver.leftArm.stretchCurve;
+        ikRig.leftArm.swivelOffset = 10f;
+        ikRig.rightArm.stretchCurve = VRIKPrefabAvatar.GetComponent<VRIK>().solver.rightArm.stretchCurve;
+        ikRig.rightArm.swivelOffset = -10f;
+
+    }
+
+
+    public void FinalIKLocomotion(GameObject avatarObj, bool Procedural)
+    {
+        var ikRig = avatarObj.GetComponent<VRIK>().solver;
+        if (Procedural)
+        {
+            ikRig.locomotion.mode = IKSolverVR.Locomotion.Mode.Procedural;
+            ikRig.locomotion.weight = 1f;
+            ikRig.locomotion.rootSpeed = 180f;
+            ikRig.locomotion.stepSpeed = 10f;
+            ikRig.locomotion.stepThreshold = 0.5f;
+            ikRig.locomotion.maxVelocity = 1f;
+            ikRig.locomotion.velocityFactor = 1f;
+            ikRig.locomotion.stepInterpolation = RootMotion.InterpolationMode.None;
+            ikRig.locomotion.maxBodyYOffset = .01f;
+            ikRig.leftLeg.stretchCurve = VRIKPrefabAvatar.GetComponent<VRIK>().solver.leftLeg.stretchCurve;
+            ikRig.rightLeg.stretchCurve = VRIKPrefabAvatar.GetComponent<VRIK>().solver.rightLeg.stretchCurve;
+        }
+        else
+        {
+            ikRig.locomotion.mode = IKSolverVR.Locomotion.Mode.Animated;
+            ikRig.locomotion.weight = 1f;
+            ikRig.locomotion.maxRootAngleMoving = 10f;
+            ikRig.locomotion.maxRootAngleStanding = 10f;
+            ikRig.locomotion.maxRootOffset = 0.1f;
+        }
     }
 
     /// <summary>

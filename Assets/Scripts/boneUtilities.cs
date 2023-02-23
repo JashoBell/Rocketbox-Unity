@@ -14,8 +14,14 @@ public static class BoneUtilities {
     public static Transform SearchHierarchyForBone(Transform current, string name)   
     {
         // check if the current bone is the bone we're looking for, if so return it
-        if (current.name == name)
+        if (current.name.Contains(name) && !current.name.Contains("Tip"))
+        { 
             return current;
+        }
+        else if (current.name == name)
+        {
+            return current;
+        }
         // search through child bones for the bone we're looking for
         for (int i = 0; i < current.childCount; ++i)
         {
@@ -41,11 +47,13 @@ public static class BoneUtilities {
 
     /// <summary>
     /// Updates the transforms of the rocketbox avatar bones to place it in t-pose, including the hands and fingers. If "twistCorrection"
-    /// is true, divides the forearm bones into two pieces (for the FinalIK twist relaxers to work well, this needs to be done).
+    /// is true, divides the forearm bones into two pieces (for the FinalIK twist relaxers to work well, this needs to be done). Also optionally 
+    /// creates finger tips for the Manus Core skeleton.
     /// </summary>
     /// <param name="avatarBase">The root of the avatar hierarchy.</param>
-    /// <param name="twistCorrection">If true, divides the forearm bones into two pieces.</param>
     /// <param name="assetPath">The path to the asset being imported.</param>
+    /// <param name="twistCorrection">If true, divides the forearm bones into two pieces.</param>
+    /// <param name="createFingerTips">If true, creates finger tips for the Manus Core skeleton.</param>
     private static void FixBones(Transform avatarBase, string assetPath, bool _twistCorrection, bool _createFingerTips)
     {
         bool female = assetPath.ToLower().Contains("female");
@@ -107,7 +115,7 @@ public static class BoneUtilities {
         SearchHierarchyForBone(avatarBase, "Bip01 R Hand").localEulerAngles =
             female ? new Vector3(50, 20, 20) : new Vector3(52, 5, 5.5f);
         SearchHierarchyForBone(avatarBase, "Bip01 R Finger0").localEulerAngles = 
-            female ? new Vector3(-87, 31, 8) : new Vector3(-55, 31, 8);
+            female ? new Vector3(-65, 24, 17) : new Vector3(-55, 31, 8);
         SearchHierarchyForBone(avatarBase, "Bip01 R Finger1").localEulerAngles = new Vector3(-4, -4, -3);
         SearchHierarchyForBone(avatarBase, "Bip01 R Finger2").localEulerAngles = new Vector3(13, -7, -6);
         SearchHierarchyForBone(avatarBase, "Bip01 R Finger3").localEulerAngles = new Vector3(15, -7, -6);

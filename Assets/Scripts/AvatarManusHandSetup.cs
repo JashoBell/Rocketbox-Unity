@@ -12,19 +12,14 @@ using Manus.Skeletons;
 public class AvatarManusHandSetup : MonoBehaviour
 {
 
-    readonly bool _addAntiScaleBone = true;
+    // Uses Manus Core data to scale the finger bones of the avatar.
+    readonly bool scale_fingers = false;
     public void ImportSetup()
     {
 
         var g = this.gameObject;
         var rHand = FindHand(g, "right");
         var lHand = FindHand(g, "left");
-
-        // if(_addAntiScaleBone)
-        // {
-        //     AddAntiScaleBone(rHand.transform, "right");
-        //     AddAntiScaleBone(lHand.transform, "left");
-        // }
 
         if(lHand.GetComponent(typeof(Skeleton)) == null)
         {
@@ -38,49 +33,6 @@ public class AvatarManusHandSetup : MonoBehaviour
     }
 
 
-            /// <summary>
-    /// Adds a child to the hand that is parent to the fingers and used to counteract the scale added by its parents.
-    /// </summary>
-    /// <param name="hand"></param>
-    /// <param name="side"></param>
-    // /// <returns></returns>
-    // private GameObject AddAntiScaleBone(Transform hand, string side)
-    // {
-    //     var antiScaleBone = new GameObject(side + "hand_antiScaleBone");
-    //     antiScaleBone.transform.parent = hand;
-    //     antiScaleBone.transform.localPosition = Vector3.zero;
-    //     antiScaleBone.transform.localRotation = Quaternion.identity;
-    //     antiScaleBone.transform.localScale = new Vector3(1/hand.transform.lossyScale.x, 1, 1);
-
-    //     for(int i = hand.childCount -1; i >= 0; --i)
-    //     {
-    //         print(i);    
-    //         print(hand.GetChild(i).name);
-    //         if(hand.GetChild(i).name.Contains("Finger"))
-    //         {
-    //             hand.GetChild(i).parent = antiScaleBone.transform;
-    //         }
-    //     }
-
-    //     return antiScaleBone;
-    // }
-
-
-    public void AttachHands()
-    {
-        /*if (!(GameObject.Find("right_hand_tracker") != null & GameObject.Find("left_hand_tracker") != null)) return;
-        var rHandTarget = GameObject.Find("right_hand_tracker");
-        var lHandTarget = GameObject.Find("left_hand_tracker");
-
-        if(lHandTarget.GetComponent(typeof(Hand)) == null)
-        {
-            AttachManusHand(lHandTarget, "left");
-        }
-        if(rHandTarget.GetComponent(typeof(Hand)) == null)
-        {
-            AttachManusHand(rHandTarget, "right");
-        }*/
-    }
 
 
     public GameObject FindHand(GameObject root, string side)
@@ -185,14 +137,15 @@ public class AvatarManusHandSetup : MonoBehaviour
             var chain = CreateChain(chainType, side == "right" ? CoreSDK.Side.Right : CoreSDK.Side.Left);
             chains.Add(chain);
         }
-        
-        // Set up skeleton settings, create the skeletonData object to add to the Skeleton component, and set up nodes.
-        var skeletonSettings = new CoreSDK.SkeletonSettings();
-        skeletonSettings.targetType = CoreSDK.SkeletonTargetType.UserData;
-        skeletonSettings.useEndPointApproximations = true;
-        skeletonSettings.skeletonTargetUserData.id = 0;
-        skeletonSettings.scaleToTarget = false;
 
+        // Set up skeleton settings, create the skeletonData object to add to the Skeleton component, and set up nodes.
+        var skeletonSettings = new CoreSDK.SkeletonSettings
+        {
+            targetType = CoreSDK.SkeletonTargetType.UserData,
+            useEndPointApproximations = true,
+            scaleToTarget = scale_fingers
+        };
+        skeletonSettings.skeletonTargetUserData.id = 0;
         handAnimator.skeletonData = new SkeletonData
         {
             type = CoreSDK.SkeletonType.Hand,
@@ -204,25 +157,5 @@ public class AvatarManusHandSetup : MonoBehaviour
 
         return hand;
     }
-    
 
-    public GameObject AttachManusHand(GameObject handTarget, string side)
-    {
-        
-        /*var handComponent = handTarget.AddComponent<Hand>();
-
-        switch (side)
-        {
-            case "right":
-                handComponent.type = Manus.Utility.HandType.RightHand;
-                handComponent.rotationOffset = new Vector3(0, 90, 90);
-                break;
-            case "left":
-                handComponent.type = Manus.Utility.HandType.LeftHand;
-                handComponent.rotationOffset = new Vector3(0, 90, 90);
-                break;
-        }*/
-
-        return handTarget;
-    }
 }
